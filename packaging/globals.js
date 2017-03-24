@@ -18,33 +18,29 @@ var Globals = function (inputTree) {
   // we need to maintain the same old names.
   this.globalNameMapping = {
     'ember-table/components/ember-table': 'Ember.Table.EmberTableComponent',
-    'ember-table/controllers/row-array': 'Ember.Table.RowArrayController',
-    'ember-table/controllers/row': 'Ember.Table.Row',
     'ember-table/mixins/mouse-wheel-handler': 'Ember.MouseWheelHandlerMixin',
     'ember-table/mixins/register-table-component': 'Ember.Table.RegisterTableComponentMixin',
     'ember-table/mixins/resize-handler': 'Ember.AddeparMixins.ResizeHandlerMixin',
     'ember-table/mixins/scroll-handler': 'Ember.ScrollHandlerMixin',
     'ember-table/mixins/show-horizontal-scroll': 'Ember.Table.ShowHorizontalScrollMixin',
     'ember-table/mixins/style-bindings': 'Ember.AddeparMixins.StyleBindingsMixin',
+    'ember-table/mixins/table-block': 'Ember.Table.TableBlock',
+    'ember-table/mixins/table-container': 'Ember.Table.TableBlock',
     'ember-table/mixins/touch-move-handler': 'Ember.TouchMoveHandlerMixin',
     'ember-table/models/column-definition': 'Ember.Table.ColumnDefinition',
-    'ember-table/views/body-table-container': 'Ember.Table.BodyTableContainer',
-    'ember-table/views/column-sortable-indicator': 'Ember.Table.ColumnSortableIndicator',
-    'ember-table/views/footer-table-container': 'Ember.Table.FooterTableContainer',
-    'ember-table/views/header-block': 'Ember.Table.HeaderBlock',
-    'ember-table/views/header-cell': 'Ember.Table.HeaderCell',
-    'ember-table/views/header-row': 'Ember.Table.HeaderRow',
-    'ember-table/views/header-table-container': 'Ember.Table.HeaderTableContainer',
-    'ember-table/views/lazy-container': 'Ember.LazyContainerView',
-    'ember-table/views/lazy-item': 'Ember.LazyItemView',
-    'ember-table/views/lazy-table-block': 'Ember.Table.LazyTableBlock',
-    'ember-table/views/multi-item-collection': 'Ember.MultiItemViewCollectionView',
-    'ember-table/views/scroll-container': 'Ember.Table.ScrollContainer',
-    'ember-table/views/scroll-panel': 'Ember.Table.ScrollPanel',
-    'ember-table/views/table-block': 'Ember.Table.TableBlock',
-    'ember-table/views/table-cell': 'Ember.Table.TableCell',
-    'ember-table/views/table-container': 'Ember.Table.TableContainer',
-    'ember-table/views/table-row': 'Ember.Table.TableRow'
+    'ember-table/models/row': 'Ember.Table.Row',
+    'ember-table/components/body-table-container': 'Ember.Table.BodyTableContainer',
+    'ember-table/components/column-sortable-indicator': 'Ember.Table.ColumnSortableIndicator',
+    'ember-table/components/footer-table-container': 'Ember.Table.FooterTableContainer',
+    'ember-table/components/header-block': 'Ember.Table.HeaderBlock',
+    'ember-table/components/header-cell': 'Ember.Table.HeaderCell',
+    'ember-table/components/header-row': 'Ember.Table.HeaderRow',
+    'ember-table/components/header-table-container': 'Ember.Table.HeaderTableContainer',
+    'ember-table/components/lazy-table-block': 'Ember.LazyTableBlock',
+    'ember-table/components/scroll-container': 'Ember.Table.ScrollContainer',
+    'ember-table/components/scroll-panel': 'Ember.Table.ScrollPanel',
+    'ember-table/components/table-cell': 'Ember.Table.TableCell',
+    'ember-table/components/table-row': 'Ember.Table.TableRow'
   };
 };
 
@@ -85,10 +81,10 @@ Globals.prototype.write = function(readTree, destDir) {
       });
 
       // Classes to register on the application's container. We need this
-      // because we used to refer to views by their full, global name
+      // because we used to refer to component by their full, global name
       // (Ember.Table.HeaderTableContainer), but now we use the view name
       // (header-table-container). So Ember needs to know where to find those
-      // views.
+      // component.
       var toRegister = [];
 
       // Define globals and register on the container
@@ -96,7 +92,7 @@ Globals.prototype.write = function(readTree, destDir) {
         // Define the global object, like Ember.Table.EmberTableComponent = ...
         output.push("window." + _this.globalNameMapping[key] +
             " = require('" + key + "')['default'];");
-        // Register on the container. We only need to register views and
+        // Register on the container. We only need to register component and
         // components.
         var type = key.split('/')[1].replace(/s$/, '')
         if (type === 'view' || type === 'component') {
@@ -108,7 +104,7 @@ Globals.prototype.write = function(readTree, destDir) {
         }
       }
 
-      // On loading the ember application, register all views and components on
+      // On loading the ember application, register all component and components on
       // the application's container
       _this.addLinesToOutput(output, [
         "Ember.onLoad('Ember.Application', function(Application) {",

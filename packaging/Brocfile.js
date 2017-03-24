@@ -61,4 +61,5 @@ var lessMain = 'addon.less';
 var lessOutput = 'ember-table.css';
 lessTree = less(lessTree, lessMain, lessOutput);
 
+console.log('tree land')
 module.exports = mergeTrees([es3Safe(compiled), lessTree]);
