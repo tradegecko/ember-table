@@ -195,7 +195,6 @@ StyleBindingsMixin, ResizeHandlerMixin, {
       return rowClass.create({
         content: datum,
         itemIndex: index,
-        tableComponent: self
       });
     });
   }),
