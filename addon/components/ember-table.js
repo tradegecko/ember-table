@@ -308,14 +308,14 @@ StyleBindingsMixin, ResizeHandlerMixin, {
   },
 
   updateLayout: function() {
-    if ((this.get('_state') || this.get('state')) !== 'inDOM') {
-      return;
-    }
-    // updating antiscroll
-    this.$('.antiscroll-wrap').antiscroll().data('antiscroll').rebuild();
-    if (this.get('columnsFillTable')) {
-      this.doForceFillColumns();
-    }
+    // if ((this.get('_state') || this.get('state')) !== 'inDOM') {
+    //   return;
+    // }
+    // // updating antiscroll
+    // this.$('.antiscroll-wrap').antiscroll().data('antiscroll').rebuild();
+    // if (this.get('columnsFillTable')) {
+    //   this.doForceFillColumns();
+    // }
   },
 
   // Iteratively adjusts column widths to adjust to a changed table width.

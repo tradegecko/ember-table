@@ -1,15 +1,7 @@
-{{#ember-collection
-  items=lazyContent
-  itemHeight=rowHeight
-  height=bodyHeight
-  scroll-left=scrollLeft
-  scroll-top=scrollTop
-  scroll-change=(action "scrollChange")
-  cell-layout=(fixed-grid-layout rowWidth rowHeight) as |item index|
-}}
-	{{component itemViewClass 
-		content=item
-		columns=columns
+{{#each lazyContent as |item index|}}
+  {{component itemViewClass
+    content=item
+    columns=columns
     enableColumnReorder=enableColumnReorder
     isShowingSortableIndicator=isShowingSortableIndicator
     sortableIndicatorLeft=sortableIndicatorLeft
@@ -19,5 +11,5 @@
     columnsFillTable=columnsFillTable
     rowDidClick='rowDidClick'
     toggleRowCollapse='toggleRowCollapse'
-	}}
-{{/ember-collection}}
+  }}
+{{/each}}
