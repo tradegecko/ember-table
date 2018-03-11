@@ -1,9 +1,13 @@
 <div style={{rowWidthSafeString}}>
-{{#each columns as |item|}}
-	{{component item.tableCellViewClass
-	    content=item
-	    row=row
-	    toggleRowCollapse='toggleRowCollapse'
-	}}
-{{/each}}
+	{{#unless row.id}}
+		<i class="{{if model.id 'hidden'}}">{{overlay-loader classNames="overlay-loader--left overlay-loader--cell" loaderType="row"}}</i>
+	{{else}}
+		{{#each columns as |item|}}
+			{{component item.tableCellViewClass
+			    content=item
+			    row=row
+			    toggleRowCollapse='toggleRowCollapse'
+			}}
+		{{/each}}
+	{{/unless}}
 </div>
