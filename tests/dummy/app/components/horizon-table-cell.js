@@ -1,6 +1,6 @@
 // BEGIN-SNIPPET horizon-table-cell
 import Ember from 'ember';
-import TableCell from 'ember-table/components/table-cell';
+import TableCell from 'ember-table-legacy/components/table-cell';
 import d3HorizonUtils from '../utils/horizon';
 
 export default TableCell.extend({

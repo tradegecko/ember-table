@@ -1,6 +1,6 @@
 // BEGIN-SNIPPET simple-controller
 import Ember from 'ember';
-import ColumnDefinition from 'ember-table/models/column-definition';
+import ColumnDefinition from 'ember-table-legacy/models/column-definition';
 import {randomNumber, randomDate} from '../utils/random';
 
 export default Ember.Controller.extend({

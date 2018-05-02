@@ -1,6 +1,6 @@
 import Ember from 'ember';
-import TableContainer from 'ember-table/mixins/table-container';
-import ShowHorizontalScrollMixin from 'ember-table/mixins/show-horizontal-scroll';
+import TableContainer from 'ember-table-legacy/mixins/table-container';
+import ShowHorizontalScrollMixin from 'ember-table-legacy/mixins/show-horizontal-scroll';
 
 export default Ember.Component.extend( TableContainer,
 ShowHorizontalScrollMixin, {
@@ -28,7 +28,7 @@ ShowHorizontalScrollMixin, {
     columnDidSort: function(fromIndex, toIndex) {
       this.sendAction('columnDidSort', fromIndex, toIndex);
     },
-    
+
     sortByColumn: function(column) {
       this.sendAction('sortByColumn', column);
     },

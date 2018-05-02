@@ -1,6 +1,6 @@
 // BEGIN-SNIPPET editable-table-cell
 import Ember from 'ember';
-import TableCell from 'ember-table/components/table-cell';
+import TableCell from 'ember-table-legacy/components/table-cell';
 
 export default TableCell.extend({
   className: 'editable-table-cell',

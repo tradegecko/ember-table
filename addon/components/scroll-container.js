@@ -1,6 +1,6 @@
 import Ember from 'ember';
-import StyleBindingsMixin from 'ember-table/mixins/style-bindings';
-import ScrollHandlerMixin from 'ember-table/mixins/scroll-handler';
+import StyleBindingsMixin from 'ember-table-legacy/mixins/style-bindings';
+import ScrollHandlerMixin from 'ember-table-legacy/mixins/scroll-handler';
 
 export default Ember.Component.extend(
 StyleBindingsMixin, ScrollHandlerMixin, {

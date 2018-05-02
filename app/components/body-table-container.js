@@ -1,3 +1,3 @@
-import BodyTableContainer from 'ember-table/components/body-table-container';
+import BodyTableContainer from 'ember-table-legacy/components/body-table-container';
 
 export default BodyTableContainer;

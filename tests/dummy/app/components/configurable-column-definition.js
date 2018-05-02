@@ -1,5 +1,5 @@
 import Ember from 'ember';
-import ColumnDefinition from 'ember-table/models/column-definition';
+import ColumnDefinition from 'ember-table-legacy/models/column-definition';
 
 // We extend Ember.Table.ColumnDefinition for two reasons: to use custom
 // getters/setters for savedWidth/minWidth/maxWidth so that they can be set via

@@ -1,5 +1,5 @@
 import Ember from 'ember';
-import StyleBindingsMixin from 'ember-table/mixins/style-bindings';
+import StyleBindingsMixin from 'ember-table-legacy/mixins/style-bindings';
 
 export default Ember.Component.extend( StyleBindingsMixin, {
   // ---------------------------------------------------------------------------

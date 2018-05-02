@@ -1,3 +1,3 @@
-import TableRow from 'ember-table/components/table-row';
+import TableRow from 'ember-table-legacy/components/table-row';
 
 export default TableRow;

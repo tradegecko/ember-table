@@ -1,5 +1,5 @@
 // BEGIN-SNIPPET financial-table-tree-row
-import Row from 'ember-table/models/row';
+import Row from 'ember-table-legacy/models/row';
 
 export default Row.extend({
   content: null,

@@ -1,3 +1,3 @@
-import FooterBlock from 'ember-table/components/footer-block';
+import FooterBlock from 'ember-table-legacy/components/footer-block';
 
 export default FooterBlock;

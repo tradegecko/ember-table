@@ -1,6 +1,6 @@
 // BEGIN-SNIPPET financial-table-tree-cell
 import Ember from 'ember';
-import TableCell from 'ember-table/components/table-cell';
+import TableCell from 'ember-table-legacy/components/table-cell';
 
 export default TableCell.extend({
   classNames: 'ember-table-table-tree-cell',

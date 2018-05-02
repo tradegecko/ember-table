@@ -1,5 +1,5 @@
 import Ember from 'ember';
-import TableComponent from 'ember-table/components/ember-table';
+import TableComponent from 'ember-table-legacy/components/ember-table';
 
 // TODO(azirbel): We extend this to create a very hacky way of calling
 // `@onResizeEnd` in the table, triggered by resizing the table's container. We

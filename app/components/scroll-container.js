@@ -1,3 +1,3 @@
-import ScrollContainer from 'ember-table/components/scroll-container';
+import ScrollContainer from 'ember-table-legacy/components/scroll-container';
 
 export default ScrollContainer;

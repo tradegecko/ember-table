@@ -1,3 +1,3 @@
-import HeaderBlock from 'ember-table/components/header-block';
+import HeaderBlock from 'ember-table-legacy/components/header-block';
 
 export default HeaderBlock;

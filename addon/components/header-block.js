@@ -1,5 +1,5 @@
 import Ember from 'ember';
-import TableBlock from 'ember-table/mixins/table-block';
+import TableBlock from 'ember-table-legacy/mixins/table-block';
 
 export default Ember.Component.extend(TableBlock, {
   classNames: ['ember-table-header-block'],
