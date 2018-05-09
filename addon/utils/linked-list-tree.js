@@ -1,18 +1,17 @@
-import { property } from '../utils/class';
 import EmberObject, { set } from '@ember/object';
 
-export default class LinkedListTree extends EmberObject {
-  @property pointerNode = null;
-  @property pointerIndex = -1;
+export default EmberObject.extend({
+  pointerNode: null,
+  pointerIndex: -1,
 
   /**
    * When a node is collapsed, this map stores list of previous nodes for the node next to the
    * collapsed node. This is used to retrieve correct previous node upon node expansion.
    */
-  @property _previousNodes = null;
+  _previousNodes: null,
 
-  constructor(root) {
-    super();
+  init(root) {
+    this._super(...arguments);
 
     root.updateNext(null);
     root.updateNodeCountAndIndex(-1);
@@ -27,7 +26,7 @@ export default class LinkedListTree extends EmberObject {
     this.set('length', root.nodeCount - 1);
 
     this._previousNodes = new WeakMap();
-  }
+  },
 
   objectAt(index) {
     let direction = this.pointerIndex < index ? 1 : -1;
@@ -37,7 +36,7 @@ export default class LinkedListTree extends EmberObject {
     }
 
     return this.pointerNode;
-  }
+  },
 
   updateParentNodeCount(node, delta) {
     node = node.parent;
@@ -46,7 +45,7 @@ export default class LinkedListTree extends EmberObject {
       node = node.parent;
     }
     this.set('length', this.get('length') + delta);
-  }
+  },
 
   /**
    * Moves pointer to a particular row. We know which direction to move to by comparing absolute
@@ -59,7 +58,7 @@ export default class LinkedListTree extends EmberObject {
       this.pointerNode = this.pointerNode.nextWithDirection(direction);
       this.pointerIndex += direction;
     }
-  }
+  },
 
   collapseNode(row) {
     // Now update pointerNode to the selected node.
@@ -84,7 +83,7 @@ export default class LinkedListTree extends EmberObject {
     set(row, 'collapse', true);
     this.updateParentNodeCount(row, 1 - (row.nodeCount + row.nodeCountDelta));
     this.notifyPropertyChange('[]');
-  }
+  },
 
   expand(row) {
     // Now update pointerNode to the selected node.
@@ -104,7 +103,7 @@ export default class LinkedListTree extends EmberObject {
     row.next = row.originalNext;
 
     set(row, 'collapse', false);
-    this.updateParentNodeCount(row, (row.nodeCount + row.nodeCountDelta) - 1);
+    this.updateParentNodeCount(row, row.nodeCount + row.nodeCountDelta - 1);
     this.notifyPropertyChange('[]');
   }
-}
+});

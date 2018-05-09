@@ -1,58 +1,59 @@
-import { property } from '../utils/class';
+import EmberObject from '@ember/object';
 
-export default class TreeNode {
-  @property parent = null;
-  @property children = null;
-  @property value = null;
+export default EmberObject.extend({
+  parent: null,
+  children: null,
+  value: null,
 
   /**
    * Current next node (apply for both case expand & collapse).
    */
-  @property next = null;
+  next: null,
 
   /**
    * The next node when this tree collapse. This next node is usually the next sibling in the tree
    * or next sibling of one of its ancestor.
    */
-  @property nextOnCollapse = null;
+  nextOnCollapse: null,
 
   /**
    * Original next node when tree is fully expanded.
    */
-  @property originalNext = null;
+  originalNext: null,
 
   /**
    * Current previous node (apply for both case expand & collapse).
    */
-  @property previous = null;
+  previous: null,
 
   /**
    * Total number of node in this subtree (including this node).
    */
-  @property nodeCount = null;
+  nodeCount: null,
   /**
    * The number of nodes that has been collapsed by this node's children & grand-children. This
    * value is negative for easy computation.
    */
-  @property nodeCountDelta = 0;
+  nodeCountDelta: 0,
 
-  @property index = null;
+  index: null,
 
-  @property collapse = false;
+  collapse: false,
 
-  constructor(parent, value) {
+  init(parent, value) {
+    this._super(...arguments);
     this.children = [];
     this.parent = parent;
     this.value = value;
-  }
+  },
 
   addChild(child) {
     this.children.push(child);
-  }
+  },
 
   setNext(node) {
     this.next = node;
-  }
+  },
 
   _setNextNode(node) {
     this.next = node;
@@ -61,7 +62,7 @@ export default class TreeNode {
     if (node !== null) {
       node.previous = this;
     }
-  }
+  },
 
   updateNext(nextNode) {
     let { children } = this;
@@ -86,14 +87,14 @@ export default class TreeNode {
         children[i].nextOnCollapse = children[i + 1];
       }
     }
-  }
+  },
 
   updateDepth(depth) {
     this.depth = depth;
     for (let child of this.children) {
       child.updateDepth(depth + 1);
     }
-  }
+  },
 
   updateNodeCountAndIndex(currentIndex) {
     this.nodeCount = 1;
@@ -106,7 +107,7 @@ export default class TreeNode {
     }
 
     return this.nodeCount;
-  }
+  },
 
   nextWithDirection(direction) {
     if (direction < 0) {
@@ -114,4 +115,4 @@ export default class TreeNode {
     }
     return this.next;
   }
-}
+});

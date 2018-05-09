@@ -1,42 +1,33 @@
-import EmberObject, {
-  computed as emberComputed,
-  get,
-  set
-} from '@ember/object';
+import EmberObject, { computed as emberComputed, get, set } from '@ember/object';
 
-import { SUPPORTS_NEW_COMPUTED } from 'ember-compatibility-helpers';
+const SUPPORTS_NEW_COMPUTED = true;
 
-import { computed, readOnly } from 'ember-decorators/object';
-import { alias } from 'ember-decorators/object/computed';
-import { property } from '../utils/class';
+export default EmberObject.extend({
+  column: null,
 
-export default class CellProxy extends EmberObject {
-  @property column = null;
-
-  @property _cache = null;
-  @property _rowComponent = null;
-
-  @readOnly @alias('_rowComponent.rowValue') rowValue;
-  @readOnly @alias('_rowComponent.rowIndex') rowIndex;
+  _cache: null,
+  _rowComponent: null,
+  rowValue: emberComputed.alias('_rowComponent.rowValue'),
+  rowIndex: emberComputed.alias('_rowComponent.rowIndex'),
 
   init() {
     this.setProperties = Object.create(null);
-  }
+  },
 
-  @computed('rowValue', 'column.valuePath')
-  get value() {
-    let rowValue = this.get('rowValue');
-    let valuePath = this.get('column.valuePath');
+  value: emberComputed('rowValue', 'column.valuePath', {
+    get() {
+      let rowValue = this.get('rowValue');
+      let valuePath = this.get('column.valuePath');
 
-    return get(rowValue, valuePath);
-  }
+      return get(rowValue, valuePath);
+    },
+    set(key, value) {
+      let rowValue = this.get('rowValue');
+      let valuePath = this.get('column.valuePath');
 
-  set value(value) {
-    let rowValue = this.get('rowValue');
-    let valuePath = this.get('column.valuePath');
-
-    set(rowValue, valuePath, value);
-  }
+      set(rowValue, valuePath, value);
+    }
+  }),
 
   unknownProperty(key) {
     let prototype = Object.getPrototypeOf(this);
@@ -50,7 +41,7 @@ export default class CellProxy extends EmberObject {
         cache.set(rowValue, Object.create(null));
       }
 
-      return cache.get(rowValue)[`${valuePath}:${k}`] = value;
+      return (cache.get(rowValue)[`${valuePath}:${k}`] = value);
     };
 
     let getValueFunc = (context, key) => {
@@ -85,4 +76,4 @@ export default class CellProxy extends EmberObject {
       });
     }
   }
-}
+});
