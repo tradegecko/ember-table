@@ -1,22 +1,21 @@
 import layout from '../templates/components/ember-table';
 import EmberTable2 from './ember-table';
-import { property } from '../utils/class';
-import { action } from 'ember-decorators/object';
 import { readOnly } from '@ember/object/computed';
 
-export default class TreeTable extends EmberTable2 {
-  @property layout = layout;
+export default EmberTable2.extend({
+  layout,
 
-  @property rows = readOnly('tree');
+  rows: readOnly('tree'),
 
-  @action
-  onRowToggled(row) {
-    let { tree } = this;
+  actions: {
+    onRowToggled(row) {
+      let { tree } = this;
 
-    if (row.collapse) {
-      tree.expand(row);
-    } else {
-      tree.collapseNode(row);
+      if (row.collapse) {
+        tree.expand(row);
+      } else {
+        tree.collapseNode(row);
+      }
     }
   }
-}
+});

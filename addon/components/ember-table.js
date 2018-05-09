@@ -1,14 +1,11 @@
 /* global ResizeSensor */
-import { action, computed } from 'ember-decorators/object';
-import { classNames } from 'ember-decorators/component';
-import { property } from '../utils/class';
 import layout from '../templates/components/ember-table';
 import { htmlSafe } from '@ember/string';
 import { run } from '@ember/runloop';
 import Component from '@ember/component';
 import CellProxy from '../utils/cell-proxy';
 import { move } from '../utils/array';
-import { get, set } from '@ember/object';
+import { computed, get, set } from '@ember/object';
 import { isNone } from '@ember/utils';
 import { A as emberA } from '@ember/array';
 import { scheduler, Token } from 'ember-raf-scheduler';
@@ -27,33 +24,32 @@ const SELECTION_MODE_NONE = 'none';
 const SELECTION_MODE_SINGLE = 'single';
 const SELECTION_MODE_MULTIPLE = 'multiple';
 
-@classNames('et-table')
-export default class EmberTable2 extends Component {
-  @property attributeBindings = ['style:style'];
-  @property tagName = 'table';
-
-  @property layout = layout;
+export default Component.extend({
+  layout,
+  classNames: ['et-table'],
+  attributeBindings: ['style:style'],
+  tagName: 'table',
 
   /**
    * Indicates how many left columns will be fixed. With current implementation, only 1 single
    * left most column can be a fixed column. Later version of Ember table could change
    * implementation to support multiple fixed columns.
    */
-  @property numFixedColumns = 0;
+  numFixedColumns: 0,
 
   /**
    *Sets which column resizing behavior to use. Possible values are <code>'standard'</code>
    * (resizing a column pushes or pulls all other columns) and <code>'fluid'</code> (resizing a
    * column steals width from neighboring columns).
    */
-  @property columnMode = COLUMN_MODE_STANDARD;
+  columnMode: COLUMN_MODE_STANDARD,
 
   /**
    * Sets which row selection behavior to follow. Possible values are 'none' (clicking on a row
    * does nothing), 'single' (clicking on a row selects it and deselects other rows), and 'multiple'
    * (multiple rows can be selected through ctrl/cmd-click or shift-click).
    */
-  @property selectionMode = SELECTION_MODE_SINGLE;
+  selectionMode: SELECTION_MODE_SINGLE,
 
   /**
    * A configuration that controls how columns shrink (or extend) when total column width does not
@@ -63,83 +59,84 @@ export default class EmberTable2 extends Component {
    * 3) "first_column": extra space is added into the first column.
    * 4) "last_column": extra space is added into the last column.
    */
-  @property tableResizeMode = TABLE_RESIZE_MODE_NONE;
+  tableResizeMode: TABLE_RESIZE_MODE_NONE,
 
   /**
    * Estimated height for each row. This number is used to decide how many rows will be rendered at
    * initial rendering.
    */
-  @property estimateRowHeight = 20;
+  estimateRowHeight: 20,
 
   /**
    * A flag that controls if all rows have same static height or not. By default it is set to false
    * and row height is dependent on its internal content. If it is set to true, all rows have the
    * same height equivalent to estimateRowHeight.
    */
-  @property staticHeight = false;
+  staticHeight: false,
 
   /**
    * Optional footer content displayed in the footer area.
    */
-  @property footerRows = null;
+  footerRows: null,
 
   /**
    * A temporary element created when moving column. This element represents the current position
    * of the moving column. It has the same width and height with the moving column. Once moving
    * completes, this element vanishes.
    */
-  @property _headerGhostElement = null;
+  _headerGhostElement: null,
 
   /**
    * A temporary vertical bar that show the column that user is about to move to. This bar aligns
    * with the right (or left) boundary of next column, depending on whether user is moving the
    * column right (or left).
    */
-  @property _headerAlignBar = null;
+  _headerAlignBar: null,
 
   /**
    * A variable used when moving column. This variables indicates the current column index that user
    * is about to move to.
    */
-  @property _currentColumnIndex = -1;
+  _currentColumnIndex: -1,
 
   /**
    * A variable used when moving column. It indicates the horizontal distance from current moving
    * column to table left boundary or fixed column (if fixed column is enabled).
    */
-  @property _currentColumnX = -1;
+  _currentColumnX: -1,
 
   /**
    * A sensor object that sends events to this table component when table size changes. When table
    * is resized, table width & height are updated and other computed properties depending on them
    * also get updated.
    */
-  @property _tableResizeSensor = null;
+  _tableResizeSensor: null,
 
   /**
    * Handlers used for synchronizing scroll positions across the scroll containers
    */
-  @property _scrollHandler = null;
-  @property _wheelHandler = null;
-  @property _touchstartHandler = null;
-  @property _touchmoveHandler = null;
+  _scrollHandler: null,
+  _wheelHandler: null,
+  _touchstartHandler: null,
+  _touchmoveHandler: null,
 
   /**
    * A variable to store table width. This is updated when table is created or resized. We need to
    * store the table width because there are several computed property dependent on the table width.
    */
-  @property _width = 0;
+  _width: 0,
 
-  @property lastSelectedIndex = -1;
+  lastSelectedIndex: -1,
 
-  @computed('numFixedColumns')
-  get hasFixedColumn() {
-    let numFixedColumns = this.get('numFixedColumns');
-    return Number.isInteger(numFixedColumns) && numFixedColumns !== 0;
-  }
+  hasFixedColumn: computed('numFixedColumns', {
+    get() {
+      let numFixedColumns = this.get('numFixedColumns');
+      return Number.isInteger(numFixedColumns) && numFixedColumns !== 0;
+    }
+  }),
 
   init() {
-    super.init(...arguments);
+    this._super(...arguments);
 
     this.cellCache = new WeakMap();
 
@@ -150,31 +147,35 @@ export default class EmberTable2 extends Component {
     this.set('selectedRows', []);
 
     this.token = new Token();
-  }
+  },
 
   didInsertElement() {
-    super.didInsertElement(...arguments);
+    this._super(...arguments);
 
     this.setupScrollSync();
     this.setupColumnFillup();
-  }
+  },
 
   willDestroyElement() {
     this.teardownColumnFillup();
     this.teardownScrollSync();
     this.token.cancel();
 
-    super.willDestroyElement(...arguments);
-  }
+    this._super(...arguments);
+  },
 
   /**
    * Sets up handlers to fillup the table container to its full width
    */
   setupColumnFillup() {
-    scheduler.schedule('sync', () => {
-      this.set('_width', this.element.offsetWidth);
-      this.fillupColumn();
-    }, this.token);
+    scheduler.schedule(
+      'sync',
+      () => {
+        this.set('_width', this.element.offsetWidth);
+        this.fillupColumn();
+      },
+      this.token
+    );
 
     this._tableResizeSensor = new ResizeSensor(this.element, () => {
       run(() => {
@@ -186,7 +187,7 @@ export default class EmberTable2 extends Component {
         this.fillupColumn();
       });
     });
-  }
+  },
 
   /**
    * Syncs horizontal scrolling between table, header, body & footer.
@@ -198,13 +199,11 @@ export default class EmberTable2 extends Component {
     let headerScrollContainer = this.element.querySelector('thead');
     let footerScrollContainer = this.element.querySelector('tfoot');
 
-    let scrollElements = [
-      bodyScrollContainer,
-      headerScrollContainer,
-      footerScrollContainer
-    ].filter((item) => {
-      return item;
-    });
+    let scrollElements = [bodyScrollContainer, headerScrollContainer, footerScrollContainer].filter(
+      (item) => {
+        return item;
+      }
+    );
 
     let prevClientX, prevClientY;
 
@@ -262,14 +261,14 @@ export default class EmberTable2 extends Component {
 
     bodyScrollContainer.addEventListener('touchstart', this._touchstartHandler);
     bodyScrollContainer.addEventListener('touchmove', this._touchmoveHandler);
-  }
+  },
 
   /**
    * Teardown the column fillup listeners
    */
   teardownColumnFillup() {
     this.get('_tableResizeSensor').detach(this.element);
-  }
+  },
 
   /**
    * Teardown the scroll syncing
@@ -283,7 +282,7 @@ export default class EmberTable2 extends Component {
 
     bodyScrollContainer.removeEventListener('touchstart', this._touchstartHandler);
     bodyScrollContainer.removeEventListener('touchmove', this._touchmoveHandler);
-  }
+  },
 
   /**
    * Sets column width with newWidth. If the newWidth is smaller than column's minWidth, use the
@@ -292,7 +291,7 @@ export default class EmberTable2 extends Component {
   setColumnWidth(column, newWidth) {
     let minWidth = get(column, 'minWidth') || 0;
     set(column, 'width', Math.max(newWidth, minWidth));
-  }
+  },
 
   /**
    * There are cases where the sum of all column width is smaller or bigger than the container
@@ -336,101 +335,109 @@ export default class EmberTable2 extends Component {
         }
       });
     }
-  }
+  },
 
-  @computed('hasFixedColumn', 'bodyColumns.firstObject.width')
-  get fixedColumnWidth() {
-    return this.get('hasFixedColumn') === true ? this.get('bodyColumns.firstObject.width') : 0;
-  }
-
-  @computed('columns.@each.subcolumns')
-  get hasSubcolumns() {
-    let columns = this.get('columns');
-
-    for (let i = 0; i < get(columns, 'length'); i++) {
-      let subcolumns = get(columns[i], 'subcolumns');
-      if (subcolumns !== undefined && subcolumns.length > 0) {
-        return true;
-      }
+  fixedColumnWidth: computed('hasFixedColumn', 'bodyColumns.firstObject.width', {
+    get() {
+      return this.get('hasFixedColumn') === true ? this.get('bodyColumns.firstObject.width') : 0;
     }
-    return false;
-  }
+  }),
+
+  hasSubcolumns: computed('columns.@each.subcolumns', {
+    get() {
+      let columns = this.get('columns');
+
+      for (let i = 0; i < get(columns, 'length'); i++) {
+        let subcolumns = get(columns[i], 'subcolumns');
+        if (subcolumns !== undefined && subcolumns.length > 0) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }),
 
   /**
    * Columns that are be used in table body. In normal use case, the body columns are the same with
    * table header columns. However, if header columns have subcolumns, this body columns are the
    * concatentation of all subcolumns.
    */
-  @computed('hasSubcolumns', 'columns.@each.subcolumns')
-  get bodyColumns() {
-    if (this.get('hasSubcolumns') !== true) {
-      return this.get('columns');
-    }
-
-    let bodyColumns = emberA();
-    this.get('columns').forEach((column) => {
-      let subcolumns = get(column, 'subcolumns');
-      if (isNone(subcolumns) || get(subcolumns, 'length') === 0) {
-        bodyColumns.pushObject(column);
-      } else {
-        subcolumns.forEach((subcolumn) => bodyColumns.pushObject(subcolumn));
+  bodyColumns: computed('hasSubcolumns', 'columns.@each.subcolumns', {
+    get() {
+      if (this.get('hasSubcolumns') !== true) {
+        return this.get('columns');
       }
-    });
-    return bodyColumns;
-  }
+
+      let bodyColumns = emberA();
+      this.get('columns').forEach((column) => {
+        let subcolumns = get(column, 'subcolumns');
+        if (isNone(subcolumns) || get(subcolumns, 'length') === 0) {
+          bodyColumns.pushObject(column);
+        } else {
+          subcolumns.forEach((subcolumn) => bodyColumns.pushObject(subcolumn));
+        }
+      });
+      return bodyColumns;
+    }
+  }),
 
   /**
    * Computed style of horizontal scrolling wrapper. This computed property adds some left margin
    * the wrapper that matches fixed column width.
    */
-  @computed(
+  horizontalScrollWrapperStyle: computed(
     'hasFixedColumn',
     'bodyColumns.firstObject.width',
     'allColumnWidths',
-    '_width'
-  ) get horizontalScrollWrapperStyle() {
-    let columns = this.get('bodyColumns');
-    let visibility = this.get('_width') < this.get('allColumnWidths') ? 'visibility' : 'hidden';
-    let left;
-    if (get(columns, 'length') > 0 && this.get('hasFixedColumn')) {
-      left = get(columns[0], 'width');
-    } else {
-      left = 0;
-    }
+    '_width',
+    {
+      get() {
+        let columns = this.get('bodyColumns');
+        let visibility = this.get('_width') < this.get('allColumnWidths') ? 'visibility' : 'hidden';
+        let left;
+        if (get(columns, 'length') > 0 && this.get('hasFixedColumn')) {
+          left = get(columns[0], 'width');
+        } else {
+          left = 0;
+        }
 
-    return htmlSafe(`visibility: ${visibility}; left: ${left}px; right: 0px;`);
-  }
+        return htmlSafe(`visibility: ${visibility}; left: ${left}px; right: 0px;`);
+      }
+    }
+  ),
 
   /**
    * Computed style for horizontal scroll element. This is computed so that its width matches
    * table's width and the table and the element can share same scrolling.
    */
-  @computed('hasFixedColumn', 'bodyColumns.@each.width')
-  get horizontalScrollStyle() {
-    let style = '';
-    let hasFixedColumn = this.get('hasFixedColumn');
-    let columns = this.get('bodyColumns');
-    let width = 0;
+  horizontalScrollStyle: computed('hasFixedColumn', 'bodyColumns.@each.width', {
+    get() {
+      let style = '';
+      let hasFixedColumn = this.get('hasFixedColumn');
+      let columns = this.get('bodyColumns');
+      let width = 0;
 
-    for (let i = hasFixedColumn ? 1 : 0; i < columns.length; i++) {
-      width += get(columns[i], 'width');
+      for (let i = hasFixedColumn ? 1 : 0; i < columns.length; i++) {
+        width += get(columns[i], 'width');
+      }
+
+      style = `width: ${width}px;`;
+      return htmlSafe(style);
     }
+  }),
 
-    style = `width: ${width}px;`;
-    return htmlSafe(style);
-  }
-
-  @computed('columns.@each.width')
-  get allColumnWidths() {
-    let columns = this.get('columns');
-    let sum = 0;
-    for (let i = 0; i < columns.length; i++) {
-      sum += get(columns[i], 'width');
+  allColumnWidths: computed('columns.@each.width', {
+    get() {
+      let columns = this.get('columns');
+      let sum = 0;
+      for (let i = 0; i < columns.length; i++) {
+        sum += get(columns[i], 'width');
+      }
+      return sum;
     }
-    return sum;
-  }
+  }),
 
-  @computed(
+  api: computed(
     'cellCache',
     'cellProxyClass',
     'numFixedColumns',
@@ -438,71 +445,28 @@ export default class EmberTable2 extends Component {
     'bodyColumns',
     'selectedRows',
     'estimateRowHeight',
-    'staticHeight'
-  )
-  get api() {
-    let staticHeight = this.get('staticHeight');
-    let staticRowHeight = null;
-    if (staticHeight === true) {
-      staticRowHeight = this.get('estimateRowHeight');
+    'staticHeight',
+    {
+      get() {
+        let staticHeight = this.get('staticHeight');
+        let staticRowHeight = null;
+        if (staticHeight === true) {
+          staticRowHeight = this.get('estimateRowHeight');
+        }
+
+        return {
+          rowHeight: this.get('rowHeight'),
+          cellCache: this.cellCache,
+          cellProxyClass: this.cellProxyClass,
+          numFixedColumns: this.numFixedColumns,
+          targetObject: this,
+          columns: this.get('bodyColumns'),
+          selectedRows: this.selectedRows,
+          staticRowHeight
+        };
+      }
     }
-
-    return {
-      rowHeight: this.get('rowHeight'),
-      cellCache: this.cellCache,
-      cellProxyClass: this.cellProxyClass,
-      numFixedColumns: this.numFixedColumns,
-      targetObject: this,
-      columns: this.get('bodyColumns'),
-      selectedRows: this.selectedRows,
-      staticRowHeight
-    };
-  }
-
-  @action
-  onColumnResized(columnIndex, delta) {
-    if (this.get('hasSubcolumns')) {
-      // Disable column reordering when table has subcolumn.
-      return;
-    }
-
-    let columns = this.get('bodyColumns');
-    let column = columns[columnIndex];
-    let width = get(column, 'width');
-    if (width + delta < get(column, 'minWidth')) {
-      return;
-    }
-
-    let columnMode = this.get('columnMode');
-    if (
-      columnMode === COLUMN_MODE_FLUID && columnIndex < columns.length - 1
-      && get(columns[columnIndex + 1], 'width') - delta < get(columns[columnIndex + 1], 'minWidth')
-    ) {
-      // Resizing this column makes the next column smaller than its min width.
-      return;
-    }
-
-    this.setColumnWidth(column, width + delta);
-    if (columnMode === COLUMN_MODE_FLUID && columnIndex < columns.length - 1) {
-      let oldWidth = get(columns[columnIndex + 1], 'width');
-      this.setColumnWidth(columns[columnIndex + 1], oldWidth - delta);
-    }
-
-    if (!this.element.classList.contains('et-unselectable')) {
-      this.element.classList.add('et-unselectable');
-    }
-  }
-
-  @action
-  onColumnResizeEnded() {
-    if (this.get('hasSubcolumns')) {
-      // Disable column reordering when table has subcolumn.
-      return;
-    }
-
-    this.element.classList.remove('et-unselectable');
-    this.fillupColumn();
-  }
+  ),
 
   /**
    * Creates header ghost element and the header aligned bar. Attached these element to the DOM.
@@ -524,154 +488,200 @@ export default class EmberTable2 extends Component {
 
     containerElement.appendChild(this._headerGhostElement);
     containerElement.appendChild(this._headerAlignBar);
-  }
+  },
 
-  @action
-  onColumnReorder(columnIndex, header, deltaX) {
-    if (this.get('hasSubcolumns')) {
-      // Disable column reordering when table has subcolumn.
-      return;
-    }
-
-    let containerElement = this.element;
-    let tableBoundingBox = containerElement.getBoundingClientRect();
-    let columns = this.get('bodyColumns');
-
-    if (this._headerGhostElement === null) {
-      this.createGhostElement(containerElement, header.width, containerElement.offsetHeight);
-
-      containerElement.appendChild(this._headerGhostElement);
-
-      this._currentColumnIndex = columnIndex;
-      this._currentColumnX = header.left - tableBoundingBox.left;
-      this.element.classList.add('et-unselectable');
-    }
-
-    // Do not allow this ghost element to move out of table.
-    let ghostLeftX = header.left - tableBoundingBox.left + deltaX;
-    // 1) Do not allow the ghost element to move out of left boundary.
-    if (this.get('hasFixedColumn')) {
-      let { scrollLeft } = containerElement;
-
-      if (ghostLeftX < get(columns[0], 'width') - scrollLeft) {
-        ghostLeftX = get(columns[0], 'width') - scrollLeft;
+  actions: {
+    onColumnResized(columnIndex, delta) {
+      if (this.get('hasSubcolumns')) {
+        // Disable column reordering when table has subcolumn.
+        return;
       }
-    }
-    if (ghostLeftX < 0) {
-      ghostLeftX = 0;
-    }
-    // 2) Do not allow the ghost element to move out of right boundary.
-    if (ghostLeftX + header.width >= tableBoundingBox.right) {
-      ghostLeftX = tableBoundingBox.right - header.width;
-    }
-    this._headerGhostElement.style.left = `${ghostLeftX}px`;
-    if (this._headerAlignBar.style.left === '') {
-      this._headerAlignBar.style.left = `${this._currentColumnX}px`;
-    }
 
-    // 3) Update the index of column that the ghost header might be replacing.
-    let ghostCenterX = ghostLeftX + header.width / 2;
-    if (ghostCenterX < this._currentColumnX) {
-      if (this._currentColumnIndex > 0) {
-        // Current column is now the previous column
-        this._currentColumnIndex--;
-        this._currentColumnX -= get(columns[this._currentColumnIndex], 'width');
+      let columns = this.get('bodyColumns');
+      let column = columns[columnIndex];
+      let width = get(column, 'width');
+      if (width + delta < get(column, 'minWidth')) {
+        return;
+      }
+
+      let columnMode = this.get('columnMode');
+      if (
+        columnMode === COLUMN_MODE_FLUID
+        && columnIndex < columns.length - 1
+        && get(columns[columnIndex + 1], 'width') - delta < get(columns[columnIndex + 1], 'minWidth')
+      ) {
+        // Resizing this column makes the next column smaller than its min width.
+        return;
+      }
+
+      this.setColumnWidth(column, width + delta);
+      if (columnMode === COLUMN_MODE_FLUID && columnIndex < columns.length - 1) {
+        let oldWidth = get(columns[columnIndex + 1], 'width');
+        this.setColumnWidth(columns[columnIndex + 1], oldWidth - delta);
+      }
+
+      if (!this.element.classList.contains('et-unselectable')) {
+        this.element.classList.add('et-unselectable');
+      }
+    },
+
+    onColumnResizeEnded() {
+      if (this.get('hasSubcolumns')) {
+        // Disable column reordering when table has subcolumn.
+        return;
+      }
+
+      this.element.classList.remove('et-unselectable');
+      this.fillupColumn();
+    },
+
+    onColumnReorder(columnIndex, header, deltaX) {
+      if (this.get('hasSubcolumns')) {
+        // Disable column reordering when table has subcolumn.
+        return;
+      }
+
+      let containerElement = this.element;
+      let tableBoundingBox = containerElement.getBoundingClientRect();
+      let columns = this.get('bodyColumns');
+
+      if (this._headerGhostElement === null) {
+        this.createGhostElement(containerElement, header.width, containerElement.offsetHeight);
+
+        containerElement.appendChild(this._headerGhostElement);
+
+        this._currentColumnIndex = columnIndex;
+        this._currentColumnX = header.left - tableBoundingBox.left;
+        this.element.classList.add('et-unselectable');
+      }
+
+      // Do not allow this ghost element to move out of table.
+      let ghostLeftX = header.left - tableBoundingBox.left + deltaX;
+      // 1) Do not allow the ghost element to move out of left boundary.
+      if (this.get('hasFixedColumn')) {
+        let { scrollLeft } = containerElement;
+
+        if (ghostLeftX < get(columns[0], 'width') - scrollLeft) {
+          ghostLeftX = get(columns[0], 'width') - scrollLeft;
+        }
+      }
+      if (ghostLeftX < 0) {
+        ghostLeftX = 0;
+      }
+      // 2) Do not allow the ghost element to move out of right boundary.
+      if (ghostLeftX + header.width >= tableBoundingBox.right) {
+        ghostLeftX = tableBoundingBox.right - header.width;
+      }
+      this._headerGhostElement.style.left = `${ghostLeftX}px`;
+      if (this._headerAlignBar.style.left === '') {
         this._headerAlignBar.style.left = `${this._currentColumnX}px`;
       }
-    } else if (ghostCenterX >= this._currentColumnX + get(columns[this._currentColumnIndex], 'width')) {
-      if (this._currentColumnIndex < columns.length - 1) {
-        // Current column is now the next column
-        this._currentColumnX = this._currentColumnX + get(columns[this._currentColumnIndex], 'width');
-        this._currentColumnIndex++;
-        this._headerAlignBar.style.left
-          =  `${this._currentColumnX + get(columns[this._currentColumnIndex], 'width') - HEAD_ALIGN_BAR_WIDTH}px`;
-      }
-    }
-  }
 
-  @action
-  onColumnReorderEnded(columnIndex) {
-    if (this.get('hasSubcolumns')) {
-      // Disable column reordering when table has subcolumn.
-      return;
-    }
-
-    let newIndex = this._currentColumnIndex;
-    let oldIndex = columnIndex;
-
-    if (this._currentColumnIndex !== columnIndex) {
-      move(this, 'bodyColumns', columnIndex, this._currentColumnIndex);
-    }
-
-    this._currentColumnIndex = -1;
-    this._currentColumnX = -1;
-
-    // Remove the header ghost element & aligned bar.
-    this.element.removeChild(this._headerGhostElement);
-    this.element.removeChild(this._headerAlignBar);
-    this._headerGhostElement = null;
-    this._headerAlignBar = null;
-    this.element.classList.remove('et-unselectable');
-
-    // Send action up to controller
-    this.sendAction('onColumnReordered', oldIndex, newIndex);
-  }
-
-  @action
-  onRowClicked(event, rowIndex) {
-    let rows = this.get('rows');
-    let item = rows.objectAt(rowIndex);
-
-    let selectedRows = this.get('selectedRows').slice();
-
-    switch (this.get('selectionMode')) {
-      case SELECTION_MODE_NONE:
-        return;
-      case SELECTION_MODE_SINGLE:
-        this.lastSelectedIndex = rowIndex;
-        selectedRows = [item];
-        break;
-      case SELECTION_MODE_MULTIPLE:
-        if (event.shiftKey) {
-          let { lastSelectedIndex } = this;
-          if (lastSelectedIndex === -1) {
-            lastSelectedIndex = 0;
-          }
-
-          let minIndex = Math.min(lastSelectedIndex, rowIndex);
-          let maxIndex = Math.max(lastSelectedIndex, rowIndex);
-
-          // Use a set to avoid item duplication
-          let rowsSet = new Set(selectedRows);
-          for (let i = minIndex; i <= maxIndex; i++) {
-            let obj = rows.objectAt(i);
-            if (!rowsSet.has(obj)) {
-              selectedRows.push(rows.objectAt(i));
-            }
-          }
-        } else {
-          if (!event.ctrlKey && !event.metaKey) {
-            selectedRows = [];
-          }
-
-          if (selectedRows.indexOf(item) < 0) {
-            selectedRows.push(item);
-          }
-          this.lastSelectedIndex = rowIndex;
+      // 3) Update the index of column that the ghost header might be replacing.
+      let ghostCenterX = ghostLeftX + header.width / 2;
+      if (ghostCenterX < this._currentColumnX) {
+        if (this._currentColumnIndex > 0) {
+          // Current column is now the previous column
+          this._currentColumnIndex--;
+          this._currentColumnX -= get(columns[this._currentColumnIndex], 'width');
+          this._headerAlignBar.style.left = `${this._currentColumnX}px`;
         }
-        break;
+      } else if (
+        ghostCenterX
+        >= this._currentColumnX + get(columns[this._currentColumnIndex], 'width')
+      ) {
+        if (this._currentColumnIndex < columns.length - 1) {
+          // Current column is now the next column
+          this._currentColumnX
+            = this._currentColumnX + get(columns[this._currentColumnIndex], 'width');
+          this._currentColumnIndex++;
+          this._headerAlignBar.style.left = `${this._currentColumnX
+            + get(columns[this._currentColumnIndex], 'width')
+            - HEAD_ALIGN_BAR_WIDTH}px`;
+        }
+      }
+    },
+
+    onColumnReorderEnded(columnIndex) {
+      if (this.get('hasSubcolumns')) {
+        // Disable column reordering when table has subcolumn.
+        return;
+      }
+
+      let newIndex = this._currentColumnIndex;
+      let oldIndex = columnIndex;
+
+      if (this._currentColumnIndex !== columnIndex) {
+        move(this, 'bodyColumns', columnIndex, this._currentColumnIndex);
+      }
+
+      this._currentColumnIndex = -1;
+      this._currentColumnX = -1;
+
+      // Remove the header ghost element & aligned bar.
+      this.element.removeChild(this._headerGhostElement);
+      this.element.removeChild(this._headerAlignBar);
+      this._headerGhostElement = null;
+      this._headerAlignBar = null;
+      this.element.classList.remove('et-unselectable');
+
+      // Send action up to controller
+      this.sendAction('onColumnReordered', oldIndex, newIndex);
+    },
+
+    onRowClicked(event, rowIndex) {
+      let rows = this.get('rows');
+      let item = rows.objectAt(rowIndex);
+
+      let selectedRows = this.get('selectedRows').slice();
+
+      switch (this.get('selectionMode')) {
+        case SELECTION_MODE_NONE:
+          return;
+        case SELECTION_MODE_SINGLE:
+          this.lastSelectedIndex = rowIndex;
+          selectedRows = [item];
+          break;
+        case SELECTION_MODE_MULTIPLE:
+          if (event.shiftKey) {
+            let { lastSelectedIndex } = this;
+            if (lastSelectedIndex === -1) {
+              lastSelectedIndex = 0;
+            }
+
+            let minIndex = Math.min(lastSelectedIndex, rowIndex);
+            let maxIndex = Math.max(lastSelectedIndex, rowIndex);
+
+            // Use a set to avoid item duplication
+            let rowsSet = new Set(selectedRows);
+            for (let i = minIndex; i <= maxIndex; i++) {
+              let obj = rows.objectAt(i);
+              if (!rowsSet.has(obj)) {
+                selectedRows.push(rows.objectAt(i));
+              }
+            }
+          } else {
+            if (!event.ctrlKey && !event.metaKey) {
+              selectedRows = [];
+            }
+
+            if (selectedRows.indexOf(item) < 0) {
+              selectedRows.push(item);
+            }
+            this.lastSelectedIndex = rowIndex;
+          }
+          break;
+      }
+
+      this.set('selectedRows', selectedRows);
+    },
+
+    onHeaderEvent() {
+      this.sendAction('onHeaderEvent', ...arguments);
+    },
+
+    onFooterEvent() {
+      this.sendAction('onFooterEvent', ...arguments);
     }
-
-    this.set('selectedRows', selectedRows);
   }
-
-  @action
-  onHeaderEvent() {
-    this.sendAction('onHeaderEvent', ...arguments);
-  }
-
-  @action
-  onFooterEvent() {
-    this.sendAction('onFooterEvent', ...arguments);
-  }
-}
+});
