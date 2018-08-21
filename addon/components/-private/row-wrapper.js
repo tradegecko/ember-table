@@ -4,57 +4,57 @@ import hbs from 'htmlbars-inline-precompile';
 import EmberObject, { get, set } from '@ember/object';
 import { A as emberA } from '@ember/array';
 
-import { tagName } from '@ember-decorators/component';
-import { argument } from '@ember-decorators/argument';
-
-import { computed } from '@ember-decorators/object';
+import { computed } from '@ember/object';
 
 import { objectAt } from '../../-private/utils/array';
 import { dynamicAlias } from '../../-private/utils/computed';
+import { alias } from '@ember/object/computed';
 
-class CellWrapper extends EmberObject {
-  @dynamicAlias('rowValue', 'columnValue.valuePath')
-  cellValue;
+const CellWrapper = EmberObject.extend({
+  // @dynamicAlias('rowValue', 'columnValue.valuePath')
 
-  @computed('rowMeta', 'columnValue')
-  get cellMeta() {
-    let rowMeta = get(this, 'rowMeta');
-    let columnValue = get(this, 'columnValue');
+  cellValue: alias('rowValue.columnValue.valuePath'),
 
-    if (!rowMeta._cellMetaCache.has(columnValue)) {
-      rowMeta._cellMetaCache.set(columnValue, EmberObject.create());
+  cellMeta: computed('rowMeta', 'columnValue', {
+    get() {
+      let rowMeta = get(this, 'rowMeta');
+      let columnValue = get(this, 'columnValue');
+
+      if (!rowMeta._cellMetaCache.has(columnValue)) {
+        rowMeta._cellMetaCache.set(columnValue, EmberObject.create());
+      }
+
+      return rowMeta._cellMetaCache.get(columnValue);
     }
+  }),
+});
 
-    return rowMeta._cellMetaCache.get(columnValue);
-  }
-}
-
-@tagName('')
-export default class RowWrapper extends Component {
-  layout = hbs`
+export default Component.extend({
+  tagName: '',
+  layout: hbs`
     {{yield api}}
-  `;
+  `,
 
-  @argument rowValue;
-  @argument columns;
+  // @argument rowValue;
+  // @argument columns;
 
-  @argument columnMetaCache;
-  @argument rowMetaCache;
+  // @argument columnMetaCache;
+  // @argument rowMetaCache;
 
-  @argument canSelect;
-  @argument rowSelectionMode;
-  @argument checkboxSelectionMode;
+  // @argument canSelect;
+  // @argument rowSelectionMode;
+  // @argument checkboxSelectionMode;
 
-  _cells = emberA([]);
+  _cells: emberA([]),
 
   destroy() {
     this._cells.forEach(cell => cell.destroy());
 
-    super.destroy(...arguments);
-  }
+    this._super(...arguments);
+  },
 
-  @computed('rowValue', 'rowMeta', 'cells', 'canSelect', 'rowSelectionMode')
-  get api() {
+  api: computed('rowValue', 'rowMeta', 'cells', 'canSelect', 'rowSelectionMode', {
+  get() {
     let rowValue = this.get('rowValue');
     let rowMeta = this.get('rowMeta');
     let cells = this.get('cells');
@@ -63,24 +63,26 @@ export default class RowWrapper extends Component {
 
     return { rowValue, rowMeta, cells, rowSelectionMode };
   }
+  }),
 
-  @computed('rowValue')
-  get rowMeta() {
-    let rowValue = this.get('rowValue');
-    let rowMetaCache = this.get('rowMetaCache');
+  rowMeta: computed('rowValue', {
+    get() {
+      let rowValue = this.get('rowValue');
+      let rowMetaCache = this.get('rowMetaCache');
 
-    return rowMetaCache.get(rowValue);
-  }
+      return rowMetaCache.get(rowValue);
+    }
+  }),
 
-  @computed(
+  cells: computed(
     'rowValue',
     'rowMeta',
     'columns.[]',
     'canSelect',
     'checkboxSelectionMode',
     'rowSelectionMode'
-  )
-  get cells() {
+  ,{
+  get() {
     let columns = this.get('columns');
     let numColumns = get(columns, 'length');
 
@@ -118,4 +120,5 @@ export default class RowWrapper extends Component {
 
     return _cells;
   }
-}
+}),
+});

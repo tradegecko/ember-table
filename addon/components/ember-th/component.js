@@ -3,12 +3,9 @@ import Component from '@ember/component';
 import { htmlSafe } from '@ember/string';
 import { next } from '@ember/runloop';
 
-import { action, computed } from '@ember-decorators/object';
-import { readOnly, equal } from '@ember-decorators/object/computed';
-import { attribute, className, tagName } from '@ember-decorators/component';
+import { computed } from '@ember/object';
+import { readOnly, equal } from '@ember/object/computed';
 import { argument } from '@ember-decorators/argument';
-import { required } from '@ember-decorators/argument/validation';
-import { type } from '@ember-decorators/argument/type';
 
 import { closest } from '../../-private/utils/element';
 
@@ -39,67 +36,56 @@ const COLUMN_REORDERING = 2;
   @yield {object} columnValue - The column definition
   @yield {object} columnMeta - The meta object associated with this column
 */
-@tagName('th')
-export default class EmberTh extends Component {
-  layout = layout;
+export default Component.extend ({
+  tagName: 'th',
+  // layout = layout;
 
   /**
     The API object passed in by the table row
   */
-  @argument
-  @required
-  @type('object')
-  api;
+  // @argument
+  // @required
+  // @type('object')
+  api: null,
 
-  @readOnly('api.columnValue') columnValue;
-  @readOnly('api.columnMeta') columnMeta;
+  columnValue: readOnly('api.columnValue'),
+  columnMeta: readOnly('api.columnMeta'),
 
   /**
     Any sorts applied to the table.
   */
-  @readOnly('api.sorts') sorts;
+  sorts: readOnly('api.sorts'),
 
   /**
     Whether or not the column is sortable. Is true IFF the column is a leaf node
     onUpdateSorts is set on the thead.
   */
-  @className
-  @readOnly('columnMeta.isSortable')
-  isSortable;
+  classNameBindings: ['isSortable', 'isResizable', 'isReorderable', 'isFixedLeft', 'isFixedRight'],
+  isSortable:  readOnly('columnMeta.isSortable'),
 
   /**
     Indicates if this column can be resized.
   */
-  @className
-  @readOnly('columnMeta.isResizable')
-  isResizable;
+  isResizable: readOnly('columnMeta.isResizable'),
 
   /**
    Indicates if this column can be reordered.
   */
-  @className
-  @readOnly('columnMeta.isReorderable')
-  isReorderable;
+ isReorderable: readOnly('columnMeta.isReorderable'),
 
-  @readOnly('columnMeta.sortIndex') sortIndex;
-  @readOnly('columnMeta.isSorted') isSorted;
-  @readOnly('columnMeta.isMultiSorted') isMultiSorted;
-  @readOnly('columnMeta.isSortedAsc') isSortedAsc;
+ sortIndex: readOnly('columnMeta.sortIndex'),
+ isSorted: readOnly('columnMeta.isSorted'),
+ isMultiSorted: readOnly('columnMeta.isMultiSorted'),
+ isSortedAsc: readOnly('columnMeta.isSortedAsc'),
 
-  @equal('columnMeta.index', 0)
-  isFirstColumn;
+ isFirstColumn: equal('columnMeta.index', 0),
 
-  @className
-  @equal('columnMeta.isFixed', 'left')
-  isFixedLeft;
+  isFixedLeft: equal('columnMeta.isFixed', 'left'),
 
-  @className
-  @equal('columnMeta.isFixed', 'right')
-  isFixedRight;
+  isFixedRight: equal('columnMeta.isFixed', 'right'),
 
-  @attribute
-  @computed('columnMeta.{width,offsetLeft,offsetRight}', 'isFixed')
-  get style() {
+  style: computed('columnMeta.{width,offsetLeft,offsetRight}', 'isFixed', {
+  get() {
     let width = this.get('columnMeta.width');
 
     let style = `width: ${width}px; min-width: ${width}px; max-width: ${width}px;`;
@@ -117,30 +103,26 @@ export default class EmberTh extends Component {
     }
 
     return htmlSafe(style);
-  }
+  }}),
 
-  @attribute('colspan')
-  @readOnly('columnMeta.columnSpan')
-  columnSpan;
-
-  @attribute('rowspan')
-  @readOnly('columnMeta.rowSpan')
-  rowSpan;
+  attributeBindings: ['columnSpan', 'rowspan'],
+  columnSpan: readOnly('columnMeta.columnSpan'),
+  rowSpan: readOnly('columnMeta.rowSpan'),
 
   /**
     A variable used for column resizing & ordering. When user press mouse at a point that's close
     to column boundary (using some threshold), this variable set whether it's the left or right
     column.
   */
-  _columnState = COLUMN_INACTIVE;
+  _columnState: COLUMN_INACTIVE,
 
   /**
     An object that listens to touch/ press/ drag events.
   */
-  _hammer = null;
+  _hammer: null,
 
   didInsertElement() {
-    super.didInsertElement(...arguments);
+    this._super(...arguments);
 
     this.get('columnMeta').registerElement(this.element);
 
@@ -154,7 +136,7 @@ export default class EmberTh extends Component {
     hammer.on('panend', this.panEndHandler);
 
     this._hammer = hammer;
-  }
+  },
 
   willDestroyElement() {
     let hammer = this._hammer;
@@ -166,13 +148,14 @@ export default class EmberTh extends Component {
 
     hammer.destroy();
 
-    super.willDestroyElement(...arguments);
-  }
+    this._super(...arguments);
+  },
 
-  @action
-  sendDropdownAction(...args) {
-    this.sendAction('onDropdownAction', ...args);
-  }
+  actions: {
+    sendDropdownAction(...args) {
+      this.sendAction('onDropdownAction', ...args);
+    }
+  },
 
   click(event) {
     let isSortable = this.get('isSortable');
@@ -183,7 +166,7 @@ export default class EmberTh extends Component {
 
       this.updateSort({ toggle });
     }
-  }
+  },
 
   keyUp(event) {
     let isSortable = this.get('isSortable');
@@ -197,7 +180,7 @@ export default class EmberTh extends Component {
     ) {
       this.updateSort();
     }
-  }
+  },
 
   updateSort({ toggle }) {
     let valuePath = this.get('columnValue.valuePath');
@@ -213,16 +196,16 @@ export default class EmberTh extends Component {
     }
 
     this.get('api').sendUpdateSort(newSortings);
-  }
+  },
 
-  pressHandler = event => {
+  pressHandler(event) {
     let [{ clientX, target }] = event.pointers;
 
     this._originalClientX = clientX;
     this._originalTargetWasResize = target.classList.contains('et-header-resize-area');
-  };
+  },
 
-  panStartHandler = event => {
+  panStartHandler(event) {
     let isResizable = this.get('isResizable');
     let isReorderable = this.get('isReorderable');
 
@@ -237,9 +220,9 @@ export default class EmberTh extends Component {
 
       this.get('columnMeta').startReorder(clientX);
     }
-  };
+  },
 
-  panMoveHandler = event => {
+  panMoveHandler(event) {
     let [{ clientX }] = event.pointers;
 
     if (this._columnState === COLUMN_RESIZING) {
@@ -249,9 +232,9 @@ export default class EmberTh extends Component {
       this.get('columnMeta').updateReorder(clientX);
       this._columnState = COLUMN_REORDERING;
     }
-  };
+  },
 
-  panEndHandler = () => {
+  panEndHandler(event) {
     if (this._columnState === COLUMN_RESIZING) {
       this.get('columnMeta').endResize();
     } else if (this._columnState === COLUMN_REORDERING) {
@@ -259,5 +242,5 @@ export default class EmberTh extends Component {
     }
 
     next(() => (this._columnState = COLUMN_INACTIVE));
-  };
-}
+  },
+});

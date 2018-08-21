@@ -1,9 +1,8 @@
 import Component from '@ember/component';
 import { htmlSafe } from '@ember/string';
 
-import { computed } from '@ember-decorators/object';
-import { attribute, classNames } from '@ember-decorators/component';
-import { service } from '@ember-decorators/service';
+import { computed } from '@ember/object';
+import { inject as injectService } from '@ember/service';
 
 import {
   setupLegacyStickyPolyfill,
@@ -15,11 +14,10 @@ import {
 } from '../../-private/sticky/table-sticky-polyfill';
 
 import layout from './template';
-
 /**
   The primary Ember Table component. This component represents the root of the
   table, and manages high level state of all of its subcomponents. It does not
-  have any arguments or actions itself - instead, all of those concerns are
+  have any arguments or actions itsrsvp all of those concerns are
   delegated to its children, who communicate to each other via the API.
 
   ```hbs
@@ -35,16 +33,23 @@ import layout from './template';
   @yield {Component} t.body - The table body component
   @yield {Component} t.foot - The table footer component
 */
-@classNames('ember-table')
-export default class EmberTable extends Component {
-  layout = layout;
+export default Component.extend({
+  classNames: ['ember-table'],
+  // layout = layout;
 
-  @service userAgent;
+  init() {
+    this._super(...arguments);
+    this.set('layout', layout);
+  },
 
-  @attribute('data-test-ember-table') dataTestEmberTable = true;
+  userAgent: injectService('user-agent'),
+
+  // @attribute('data-test-ember-table') dataTestEmberTable = true;
+  dataTestEmberTable: true,
+  attributeBindings: ['dataTestEmberTable'],
 
   didInsertElement() {
-    super.didInsertElement(...arguments);
+    this._super(...arguments);
 
     let browser = this.get('userAgent.browser');
 
@@ -61,7 +66,7 @@ export default class EmberTable extends Component {
         setupTableStickyPolyfill(tfoot);
       }
     }
-  }
+  },
 
   willDestroyElement() {
     let browser = this.get('userAgent.browser');
@@ -81,23 +86,25 @@ export default class EmberTable extends Component {
       }
     }
 
-    super.willDestroyElement(...arguments);
-  }
+    this._super(...arguments);
+  },
 
-  @computed('tableWidth')
-  get tableStyle() {
-    return htmlSafe(`width: ${this.get('tableWidth')}px;`);
-  }
+  tableStyle: computed('tableWidth', {
+    get() {
+      return htmlSafe(`width: ${this.get('tableWidth')}px;`);
+    },
+  }),
 
-  @computed
-  get api() {
-    return {
-      columns: null,
-      registerColumnTree: this.registerColumnTree,
-    };
-  }
+  api: computed({
+    get() {
+      return {
+        columns: null,
+        registerColumnTree: this.registerColumnTree,
+      };
+    },
+  }),
 
-  registerColumnTree = columnTree => {
+  registerColumnTree(columnTree) {
     this.set('api.columnTree', columnTree);
-  };
-}
+  },
+});

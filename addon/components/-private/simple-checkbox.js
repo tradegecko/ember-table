@@ -1,51 +1,47 @@
 import Component from '@ember/component';
-import { tagName, attribute } from '@ember-decorators/component';
-import { argument } from '@ember-decorators/argument';
-import { type, optional } from '@ember-decorators/argument/type';
-import { Action } from '@ember-decorators/argument/types';
 
-@tagName('input')
-export default class SimpleCheckbox extends Component {
-  value = null;
+export default Component.extend ({
+  tagName: 'input',
+  value: null,
 
-  @attribute type = 'checkbox';
+  type: 'checkbox',
 
-  @argument({ defaultIfUndefined: true })
-  @type('boolean')
-  @attribute
-  checked = false;
+  // @argument({ defaultIfUndefined: true })
+  // @type('boolean')
+  // @attribute
+  checked: false,
 
-  @argument({ defaultIfUndefined: true })
-  @type('boolean')
-  @attribute
-  disabled = false;
+  // @argument({ defaultIfUndefined: true })
+  // @type('boolean')
+  // @attribute
+  disabled: false,
 
-  @argument({ defaultIfUndefined: true })
-  @type('boolean')
-  @attribute
-  indeterminate = false;
+  // @argument({ defaultIfUndefined: true })
+  // @type('boolean')
+  // @attribute
+  indeterminate: false,
 
-  @argument
-  @type('any')
-  @attribute
-  value = null;
+  // @argument
+  // @type('any')
+  // @attribute
+  value: null,
 
-  @argument
-  @type(optional(Action))
-  onClick = null;
+  // @argument
+  // @type(optional(Action))
+  onClick: null,
 
-  @argument
-  @type(optional(Action))
-  onChange = null;
+  // @argument
+  // @type(optional(Action))
+  onChange: null,
 
-  @argument
-  @type('string')
-  @attribute('aria-label')
-  ariaLabel;
+  // @argument
+  // @type('string')
+  // @attribute('aria-label')
+  ariaLabel: null,
 
   click(event) {
     this.sendAction('onClick', event);
-  }
+  },
 
   change(event) {
     let checked = this.element.checked;
@@ -58,5 +54,5 @@ export default class SimpleCheckbox extends Component {
     this.element.indeterminate = this.get('indeterminate');
 
     this.sendAction('onChange', checked, { value, indeterminate }, event);
-  }
-}
+  },
+});
