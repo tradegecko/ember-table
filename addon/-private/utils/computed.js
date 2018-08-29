@@ -119,3 +119,11 @@ export const dynamicAlias = macro(
     }
   })
 );
+
+export const dynamicAliasNew = classComputedProperty([false, true], function(...segments) {
+  if (segments.every(s => typeof s === 'string')) {
+    return alias(segments.join('.'));
+  } else {
+    return null;
+  }
+});
