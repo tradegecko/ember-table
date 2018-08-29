@@ -1,8 +1,8 @@
 import EmberTBody from '../ember-tbody/component';
 import { A as emberA } from '@ember/array';
 
-import { computed } from '@ember-decorators/object';
-import { tagName } from '@ember-decorators/component';
+import { computed } from '@ember/object';
+// import { tagName } from '@ember-decorators/component';
 
 import layout from './template';
 
@@ -29,21 +29,22 @@ import layout from './template';
   @yield {object} f.rowValue - The value for the currently yielded row
   @yield {object} f.rowMeta - The meta for the currently yielded row
 */
-@tagName('tfoot')
-export default class EmberTFoot extends EmberTBody {
-  layout = layout;
+export default EmberTBody.extend({
+  tagName: 'tfoot',
+  layout,
 
-  @computed('wrappedRows.[]')
-  get wrappedRowArray() {
-    let wrappedRows = this.get('wrappedRows');
-    let wrappedRowsLength = wrappedRows.get('length');
+  wrappedRowArray: computed('wrappedRows.[]', {
+    get() {
+      let wrappedRows = this.get('wrappedRows');
+      let wrappedRowsLength = wrappedRows.get('length');
 
-    let arr = [];
+      let arr = [];
 
-    for (let i = 0; i < wrappedRowsLength; i++) {
-      arr.push(wrappedRows.objectAt(i));
-    }
+      for (let i = 0; i < wrappedRowsLength; i++) {
+        arr.push(wrappedRows.objectAt(i));
+      }
 
-    return emberA(arr);
-  }
-}
+      return emberA(arr);
+    },
+  }),
+});
