@@ -10,6 +10,7 @@ import { readOnly, or } from '@ember/object/computed';
 // import { Action } from '@ember-decorators/argument/types';
 
 import CollapseTree, { SELECT_MODE } from '../../-private/collapse-tree';
+import { computedFallbackIfUndefined } from '../../-private/utils/computed';
 
 import layout from './template';
 import { assert } from '@ember/debug';
@@ -157,7 +158,7 @@ export default Component.extend({
   */
   // @argument({ defaultIfUndefined: true })
   // @type('object')
-  // rows = [];
+  rows: computedFallbackIfUndefined([]),
 
   /**
     This key is the property used by the collection to determine whether an
@@ -192,7 +193,6 @@ export default Component.extend({
   init() {
     this._super(...arguments);
 
-    this.rows = [];
     this.rowMetaCache = new Map();
     this.collapseTree = CollapseTree.create({
       sendAction: this.sendAction.bind(this),

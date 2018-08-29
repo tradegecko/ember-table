@@ -1,12 +1,12 @@
 import Component from '@ember/component';
-import { computed } from '@ember-decorators/object';
-import { readOnly } from '@ember-decorators/object/computed';
-import { className, classNames, tagName } from '@ember-decorators/component';
+import { computed } from '@ember/object';
+import { readOnly } from '@ember/object/computed';
+// import { className, classNames, tagName } from '@ember-decorators/component';
 
-import { argument } from '@ember-decorators/argument';
-import { required } from '@ember-decorators/argument/validation';
-import { type, optional } from '@ember-decorators/argument/type';
-import { Action } from '@ember-decorators/argument/types';
+// import { argument } from '@ember-decorators/argument';
+// import { required } from '@ember-decorators/argument/validation';
+// import { type, optional } from '@ember-decorators/argument/type';
+// import { Action } from '@ember-decorators/argument/types';
 
 import { closest } from '../../-private/utils/element';
 
@@ -47,63 +47,55 @@ import { SELECT_MODE } from '../../-private/collapse-tree';
   @yield {object} r.rowValue - The value for the currently yielded row
   @yield {object} r.rowMeta - The meta for the currently yielded row
 */
-@tagName('tr')
-@classNames('et-tr')
-export default class EmberTr extends Component {
-  layout = layout;
+export default Component.extend({
+  layout,
+  tagName: 'tr',
+  classNames: ['et-tr'],
+  classNameBindings: ['isSelected', 'isGroupSelected', 'isSelectable'],
 
   /**
     The API object passed in by the table body, header, or footer
   */
-  @argument
-  @required
-  @type('object')
-  api;
+  // @argument
+  // @required
+  // @type('object')
+  // api;
 
   /**
     Action sent when the user clicks this element
   */
-  @argument
-  @type(optional(Action))
-  onClick;
+  // @argument
+  // @type(optional(Action))
+  // onClick;
 
   /**
     Action sent when the user double clicks this element
   */
-  @argument
-  @type(optional(Action))
-  onDoubleClick;
+  // @argument
+  // @type(optional(Action))
+  // onDoubleClick;
 
-  @readOnly('api.rowValue')
-  rowValue;
+  rowValue: readOnly('api.rowValue'),
 
-  @readOnly('api.rowMeta')
-  rowMeta;
+  rowMeta: readOnly('api.rowMeta'),
 
-  @readOnly('api.cells')
-  cells;
+  cells: readOnly('api.cells'),
 
-  @readOnly('api.rowSelectionMode')
-  rowSelectionMode;
+  rowSelectionMode: readOnly('api.rowSelectionMode'),
 
-  @readOnly('api.isHeader')
-  isHeader;
+  isHeader: readOnly('api.isHeader'),
 
-  @className
-  @readOnly('rowMeta.isSelected')
-  isSelected;
+  isSelected: readOnly('rowMeta.isSelected'),
 
-  @className
-  @readOnly('rowMeta.isGroupSelected')
-  isGroupSelected;
+  isGroupSelected: readOnly('rowMeta.isGroupSelected'),
 
-  @className
-  @computed('rowSelectionMode')
-  get isSelectable() {
-    let rowSelectionMode = this.get('rowSelectionMode');
+  isSelectable: computed('rowSelectionMode', {
+    get() {
+      let rowSelectionMode = this.get('rowSelectionMode');
 
-    return rowSelectionMode === SELECT_MODE.MULTIPLE || rowSelectionMode === SELECT_MODE.SINGLE;
-  }
+      return rowSelectionMode === SELECT_MODE.MULTIPLE || rowSelectionMode === SELECT_MODE.SINGLE;
+    },
+  }),
 
   click(event) {
     let rowSelectionMode = this.get('rowSelectionMode');
@@ -123,11 +115,11 @@ export default class EmberTr extends Component {
     }
 
     this.sendEventAction('onClick', event);
-  }
+  },
 
   doubleClick(event) {
     this.sendEventAction('onDoubleClick', event);
-  }
+  },
 
   sendEventAction(action, event) {
     let rowValue = this.get('rowValue');
@@ -139,5 +131,5 @@ export default class EmberTr extends Component {
       rowValue,
       rowMeta,
     });
-  }
-}
+  },
+});

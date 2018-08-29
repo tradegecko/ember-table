@@ -1,6 +1,7 @@
-import EmberObject, { defineProperty, computed, observer } from '@ember/object';
-import { computed } from '@ember/object';
+import EmberObject, { computed, observer } from '@ember/object';
 import { alias } from '@ember/object/computed';
+import { defineProperty } from '@ember/polyfills';
+
 // import { macro } from '@ember-decorators/object/computed';
 
 const PROPERTIES = new WeakMap();
@@ -129,15 +130,13 @@ export const dynamicAliasNew = classComputedProperty([false, true], function(...
   }
 });
 
-
-
-export const computedFallbackIfUndefined = (fallback) {
+export const computedFallbackIfUndefined = fallback => {
   return computed({
     get() {
       return fallback;
     },
     set(_, v) {
       return v === undefined ? fallback : v;
-    }
+    },
   });
-}
+};
