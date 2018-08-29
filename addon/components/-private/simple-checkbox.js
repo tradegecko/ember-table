@@ -1,52 +1,34 @@
 import Component from '@ember/component';
-import { tagName, attribute } from '@ember-decorators/component';
-import { argument } from '@ember-decorators/argument';
-import { type, optional } from '@ember-decorators/argument/type';
-import { Action } from '@ember-decorators/argument/types';
+// import { tagName, attribute } from '@ember-decorators/component';
+// import { argument } from '@ember-decorators/argument';
+// import { type, optional } from '@ember-decorators/argument/type';
+// import { Action } from '@ember-decorators/argument/types';
 
-@tagName('input')
-export default class SimpleCheckbox extends Component {
-  value = null;
+export default Component.extend({
+  tagName: 'input',
+  attributeBindings: ['type', 'checked', 'disabled', 'indeterminate', 'value', 'aria-label'],
+  type: 'checkbox',
+  value: null,
+  checked: false,
+  disabled: false,
+  indeterminate: false,
 
-  @attribute
-  type = 'checkbox';
+  // @argument
+  // @type(optional(Action))
+  // onClick = null;
 
-  @argument({ defaultIfUndefined: true })
-  @type('boolean')
-  @attribute
-  checked = false;
+  // @argument
+  // @type(optional(Action))
+  // onChange = null;
 
-  @argument({ defaultIfUndefined: true })
-  @type('boolean')
-  @attribute
-  disabled = false;
-
-  @argument({ defaultIfUndefined: true })
-  @type('boolean')
-  @attribute
-  indeterminate = false;
-
-  @argument
-  @type('any')
-  @attribute
-  value = null;
-
-  @argument
-  @type(optional(Action))
-  onClick = null;
-
-  @argument
-  @type(optional(Action))
-  onChange = null;
-
-  @argument
-  @type('string')
-  @attribute('aria-label')
-  ariaLabel;
+  // @argument
+  // @type('string')
+  // @attribute('aria-label')
+  // ariaLabel;
 
   click(event) {
     this.sendAction('onClick', event);
-  }
+  },
 
   change(event) {
     let checked = this.element.checked;
@@ -59,5 +41,5 @@ export default class SimpleCheckbox extends Component {
     this.element.indeterminate = this.get('indeterminate');
 
     this.sendAction('onChange', checked, { value, indeterminate }, event);
-  }
-}
+  },
+});
