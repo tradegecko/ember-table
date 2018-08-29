@@ -3,8 +3,8 @@ import { addObserver, removeObserver } from '@ember/object/observers';
 import { A as emberA } from '@ember/array';
 import { DEBUG } from '@glimmer/env';
 
-import { computed } from '@ember-decorators/object';
-import { readOnly, gt } from '@ember-decorators/object/computed';
+import { computed } from '@ember/object';
+import { readOnly, gt } from '@ember/object/computed';
 
 import { scheduler, Token } from 'ember-raf-scheduler';
 
@@ -63,105 +63,100 @@ function divideRounded(x, n) {
   return result;
 }
 
-class TableColumnMeta extends EmberObject {
+const TableColumnMeta = EmberObject.extend({
   // If no width is set on the column itself, we cache a temporary width on the
   // meta object. This is set to the default width.
-  _width = DEFAULT_COLUMN_WIDTH;
+  _width: DEFAULT_COLUMN_WIDTH,
 
-  @readOnly('_node.isLeaf')
-  isLeaf;
+  isLeaf: readOnly('_node.isLeaf'),
 
-  @readOnly('_node.isFixed')
-  isFixed;
+  isFixed: readOnly('_node.isFixed'),
 
-  @readOnly('_node.isSortable')
-  isSortable;
+  isSortable: readOnly('_node.isSortable'),
 
-  @readOnly('_node.isResizable')
-  isResizable;
+  isResizable: readOnly('_node.isResizable'),
 
-  @readOnly('_node.isReorderable')
-  isReorderable;
+  isReorderable: readOnly('_node.isReorderable'),
 
-  @readOnly('_node.width')
-  width;
+  width: readOnly('_node.width'),
 
-  @readOnly('_node.offsetLeft')
-  offsetLeft;
+  offsetLeft: readOnly('_node.offsetLeft'),
 
-  @readOnly('_node.offsetRight')
-  offsetRight;
+  offsetRight: readOnly('_node.offsetRight'),
 
-  @computed('isLeaf', '_node.{depth,tree.root.maxChildDepth}')
-  get rowSpan() {
-    if (!this.get('isLeaf')) {
-      return 1;
-    }
-
-    let maxDepth = this.get('_node.tree.root.maxChildDepth');
-    let depth = this.get('_node.depth');
-
-    return maxDepth - (depth - 1);
-  }
-
-  @computed('isLeaf', '_node.leaves.length')
-  get columnSpan() {
-    if (this.get('isLeaf')) {
-      return 1;
-    }
-
-    return this.get('_node.leaves.length');
-  }
-
-  @computed('isLeaf', '_node.offsetIndex')
-  get index() {
-    if (this.get('isLeaf')) {
-      return this.get('_node.offsetIndex');
-    }
-  }
-
-  @computed('_node.{tree.sorts.[],column.valuePath}')
-  get sortIndex() {
-    let valuePath = this.get('_node.column.valuePath');
-    let sorts = this.get('_node.tree.sorts');
-
-    let sortIndex = 0;
-
-    for (let i = 0; i < get(sorts, 'length'); i++) {
-      let sorting = objectAt(sorts, i);
-
-      if (get(sorting, 'valuePath') === valuePath) {
-        sortIndex = i + 1;
-        break;
+  rowSpan: computed('isLeaf', '_node.{depth,tree.root.maxChildDepth}', {
+    get() {
+      if (!this.get('isLeaf')) {
+        return 1;
       }
-    }
 
-    return sortIndex;
-  }
+      let maxDepth = this.get('_node.tree.root.maxChildDepth');
+      let depth = this.get('_node.depth');
 
-  @gt('sortIndex', 0)
-  isSorted;
+      return maxDepth - (depth - 1);
+    },
+  }),
 
-  @gt('_node.tree.sorts.length', 1)
-  isMultiSorted;
+  columnSpan: computed('isLeaf', '_node.leaves.length', {
+    get() {
+      if (this.get('isLeaf')) {
+        return 1;
+      }
 
-  @computed('_node.tree.sorts.[]', 'sortIndex')
-  get isSortedAsc() {
-    let sortIndex = this.get('sortIndex');
-    let sorts = this.get('_node.tree.sorts');
+      return this.get('_node.leaves.length');
+    },
+  }),
 
-    return get(objectAt(sorts, sortIndex - 1), 'isAscending');
-  }
-}
+  index: computed('isLeaf', '_node.offsetIndex', {
+    get() {
+      if (this.get('isLeaf')) {
+        return this.get('_node.offsetIndex');
+      }
+    },
+  }),
+
+  sortIndex: computed('_node.{tree.sorts.[],column.valuePath}', {
+    get() {
+      let valuePath = this.get('_node.column.valuePath');
+      let sorts = this.get('_node.tree.sorts');
+
+      let sortIndex = 0;
+
+      for (let i = 0; i < get(sorts, 'length'); i++) {
+        let sorting = objectAt(sorts, i);
+
+        if (get(sorting, 'valuePath') === valuePath) {
+          sortIndex = i + 1;
+          break;
+        }
+      }
+
+      return sortIndex;
+    },
+  }),
+
+  isSorted: gt('sortIndex', 0),
+
+  isMultiSorted: ('_node.tree.sorts.length', 1),
+
+  isSortedAsc: computed('_node.tree.sorts.[]', 'sortIndex', {
+    get() {
+      let sortIndex = this.get('sortIndex');
+      let sorts = this.get('_node.tree.sorts');
+
+      return get(objectAt(sorts, sortIndex - 1), 'isAscending');
+    },
+  }),
+});
 
 /**
   Single node of a ColumnTree
 */
-class ColumnTreeNode extends EmberObject {
-  _subcolumnNodes = null;
+const ColumnTreeNode = EmberObject.extend({
+  _subcolumnNodes: null,
 
-  constructor() {
-    super(...arguments);
+  init() {
+    this._super(...arguments);
 
     let tree = get(this, 'tree');
     let parent = get(this, 'parent');
@@ -193,13 +188,12 @@ class ColumnTreeNode extends EmberObject {
       addObserver(this, 'maxChildDepth', this._notifyMaxChildDepth);
       addObserver(this, 'leaves.[]', this._notifyLeaves);
     }
-  }
+  },
 
   destroy() {
     this.cleanSubcolumnNodes();
-
-    super.destroy(...arguments);
-  }
+    this._super(...arguments);
+  },
 
   /**
     Fully destroys the child nodes in the event that they change or that this
@@ -211,333 +205,353 @@ class ColumnTreeNode extends EmberObject {
       this._subcolumnNodes.forEach(n => n.destroy());
       this._subcolumnNodes = null;
     }
-  }
+  },
 
-  @computed('column.subcolumns.[]')
-  get subcolumnNodes() {
-    this.cleanSubcolumnNodes();
+  subcolumnNodes: computed('column.subcolumns.[]', {
+    get() {
+      this.cleanSubcolumnNodes();
 
-    if (get(this, 'isLeaf')) {
-      return;
-    }
-
-    let tree = get(this, 'tree');
-    let parent = this;
-
-    this._subcolumnNodes = emberA(
-      get(this, 'column.subcolumns').map(column => ColumnTreeNode.create({ column, tree, parent }))
-    );
-
-    return this._subcolumnNodes;
-  }
-
-  @computed('column.subcolumns.[]')
-  get isLeaf() {
-    let subcolumns = get(this, 'column.subcolumns');
-
-    return !subcolumns || get(subcolumns, 'length') === 0;
-  }
-
-  @computed('column.isSortable', 'tree.enableSort')
-  get isSortable() {
-    let enableSort = get(this, 'tree.enableSort');
-    let valuePath = get(this, 'column.valuePath');
-    let isSortable = get(this, 'column.isSortable');
-    let isLeaf = get(this, 'isLeaf');
-
-    return (
-      isLeaf === true &&
-      enableSort !== false &&
-      isSortable !== false &&
-      typeof valuePath === 'string'
-    );
-  }
-
-  @computed('column.isReorderable', 'tree.enableReorder')
-  get isReorderable() {
-    let enableReorder = get(this, 'tree.enableReorder');
-    let isReorderable = get(this, 'column.isReorderable');
-
-    return enableReorder !== false && isReorderable !== false;
-  }
-
-  @computed('column.isResizable', 'tree.enableResize')
-  get isResizable() {
-    let isLeaf = get(this, 'isLeaf');
-
-    if (isLeaf) {
-      let enableResize = get(this, 'tree.enableResize');
-      let isResizable = get(this, 'column.isResizable');
-
-      return enableResize !== false && isResizable !== false;
-    } else {
-      let subcolumns = get(this, 'subcolumnNodes');
-
-      return subcolumns.some(s => get(s, 'isResizable'));
-    }
-  }
-
-  @computed('parent.{isFixed,isRoot}', 'column.isFixed')
-  get isFixed() {
-    if (get(this, 'parent.isRoot')) {
-      return get(this, 'column.isFixed');
-    }
-
-    return get(this, 'parent.isFixed');
-  }
-
-  @computed('parent.depth')
-  get depth() {
-    if (get(this, 'parent')) {
-      return get(this, 'parent.depth') + 1;
-    }
-
-    return 0;
-  }
-
-  @computed('isLeaf', 'subcolumns.@each.depth')
-  get maxChildDepth() {
-    if (get(this, 'isLeaf')) {
-      return get(this, 'depth');
-    }
-
-    return Math.max(...get(this, 'subcolumnNodes').map(s => get(s, 'maxChildDepth')));
-  }
-
-  @computed('isLeaf', 'subcolumnNodes.{[],@each.leaves}')
-  get leaves() {
-    if (get(this, 'isLeaf')) {
-      return [this];
-    }
-
-    return get(this, 'subcolumnNodes').reduce((leaves, subcolumn) => {
-      leaves.push(...get(subcolumn, 'leaves'));
-
-      return leaves;
-    }, emberA());
-  }
-
-  @computed('column.minWidth')
-  get minWidth() {
-    if (get(this, 'isLeaf')) {
-      let columnMinWidth = get(this, 'column.minWidth');
-
-      return typeof columnMinWidth === 'number' ? columnMinWidth : DEFAULT_MIN_WIDTH;
-    }
-
-    return get(this, 'subcolumnNodes').reduce((sum, subcolumn) => {
-      let subcolumnMinWidth = get(subcolumn, 'minWidth');
-
-      return sum + subcolumnMinWidth;
-    }, 0);
-  }
-
-  @computed('column.minWidth')
-  get maxWidth() {
-    if (get(this, 'isLeaf')) {
-      let columnMaxWidth = get(this, 'column.maxWidth');
-
-      return typeof columnMaxWidth === 'number' ? columnMaxWidth : DEFAULT_MAX_WIDTH;
-    }
-
-    return get(this, 'subcolumnNodes').reduce((sum, subcolumn) => {
-      let subcolumnMaxWidth = get(subcolumn, 'maxWidth');
-
-      return sum + subcolumnMaxWidth;
-    }, 0);
-  }
-
-  @computed('isLeaf', 'subcolumnNodes.@each.width', 'column.width')
-  get width() {
-    if (get(this, 'isLeaf')) {
-      let column = get(this, 'column');
-      let columnWidth = get(column, 'width');
-
-      if (typeof columnWidth === 'number') {
-        return columnWidth;
-      } else {
-        let meta = get(this, 'tree.columnMetaCache').get(column);
-        return get(meta, '_width');
+      if (get(this, 'isLeaf')) {
+        return;
       }
-    }
 
-    return get(this, 'subcolumnNodes').reduce((sum, subcolumn) => {
-      let subcolumnWidth = get(subcolumn, 'width');
+      let tree = get(this, 'tree');
+      let parent = this;
 
-      return sum + subcolumnWidth;
-    }, 0);
-  }
+      this._subcolumnNodes = emberA(
+        get(this, 'column.subcolumns').map(column =>
+          ColumnTreeNode.create({ column, tree, parent })
+        )
+      );
 
-  set width(newWidth) {
-    let oldWidth = get(this, 'width');
-    let isResizable = get(this, 'isResizable');
+      return this._subcolumnNodes;
+    },
+  }),
 
-    if (!isResizable) {
-      return oldWidth;
-    }
+  isLeaf: computed('column.subcolumns.[]', {
+    get() {
+      let subcolumns = get(this, 'column.subcolumns');
 
-    let delta = newWidth - oldWidth;
+      return !subcolumns || get(subcolumns, 'length') === 0;
+    },
+  }),
 
-    let minWidth = get(this, 'minWidth');
-    let maxWidth = get(this, 'maxWidth');
+  isSortable: computed('column.isSortable', 'tree.enableSort', {
+    get() {
+      let enableSort = get(this, 'tree.enableSort');
+      let valuePath = get(this, 'column.valuePath');
+      let isSortable = get(this, 'column.isSortable');
+      let isLeaf = get(this, 'isLeaf');
 
-    delta = Math.max(Math.min(oldWidth + delta, maxWidth), minWidth) - oldWidth;
+      return (
+        isLeaf === true &&
+        enableSort !== false &&
+        isSortable !== false &&
+        typeof valuePath === 'string'
+      );
+    },
+  }),
 
-    if (delta === 0) {
-      return;
-    }
+  isReorderable: computed('column.isReorderable', 'tree.enableReorder', {
+    get() {
+      let enableReorder = get(this, 'tree.enableReorder');
+      let isReorderable = get(this, 'column.isReorderable');
 
-    if (get(this, 'isLeaf')) {
-      let column = get(this, 'column');
-      let columnWidth = get(column, 'width');
+      return enableReorder !== false && isReorderable !== false;
+    },
+  }),
 
-      if (typeof columnWidth === 'number') {
-        return set(column, 'width', oldWidth + delta);
+  isResizable: computed('column.isResizable', 'tree.enableResize', {
+    get() {
+      let isLeaf = get(this, 'isLeaf');
+
+      if (isLeaf) {
+        let enableResize = get(this, 'tree.enableResize');
+        let isResizable = get(this, 'column.isResizable');
+
+        return enableResize !== false && isResizable !== false;
       } else {
-        let meta = get(this, 'tree.columnMetaCache').get(column);
-        return set(meta, '_width', oldWidth + delta);
+        let subcolumns = get(this, 'subcolumnNodes');
+
+        return subcolumns.some(s => get(s, 'isResizable'));
       }
-    } else {
-      let subcolumns = get(this, 'subcolumnNodes');
+    },
+  }),
 
-      // Delta can only be rendered at a pixel level of precision in tables in
-      // some browsers, so we round and distribute the remainder as well. We also
-      // don't know when we may hit a constraint (e.g. minWidth) so we have to do
-      // this repeatedly. We take the largest chunk we can and try to fit it into
-      // each piece in a loop.
+  isFixed: computed('parent.{isFixed,isRoot}', 'column.isFixed', {
+    get() {
+      if (get(this, 'parent.isRoot')) {
+        return get(this, 'column.isFixed');
+      }
 
-      // We distribute chunks to the columns starting from the column with the
-      // smallest width to the column with the largest width.
-      let sortedSubcolumns = subcolumns
-        .sortBy('width')
-        .filter(n => get(n, 'isResizable'))
-        .reverse();
+      return get(this, 'parent.isFixed');
+    },
+  }),
 
-      let loopCount = 0;
-      let prevDelta = 0;
-      delta = delta > 0 ? Math.floor(delta) : Math.ceil(delta);
-      while (delta !== 0) {
-        let deltaChunks = divideRounded(delta, sortedSubcolumns.length);
-        for (let i = 0; i < deltaChunks.length; i++) {
-          let subcolumn = sortedSubcolumns[i];
-          let deltaChunk = deltaChunks[i];
-          let oldWidth = get(subcolumn, 'width');
-          let targetWidth = oldWidth + deltaChunk;
+  depth: computed('parent.depth', {
+    get() {
+      if (get(this, 'parent')) {
+        return get(this, 'parent.depth') + 1;
+      }
 
-          set(subcolumn, 'width', targetWidth);
+      return 0;
+    },
+  }),
 
-          let newWidth = get(subcolumn, 'width');
+  maxChildDepth: computed('isLeaf', 'subcolumns.@each.depth', {
+    get() {
+      if (get(this, 'isLeaf')) {
+        return get(this, 'depth');
+      }
 
-          // subtract the amount that changed, if any
-          delta -= newWidth - oldWidth;
+      return Math.max(...get(this, 'subcolumnNodes').map(s => get(s, 'maxChildDepth')));
+    },
+  }),
 
-          if (delta === 0) {
+  leaves: computed('isLeaf', 'subcolumnNodes.{[],@each.leaves}', {
+    get() {
+      if (get(this, 'isLeaf')) {
+        return [this];
+      }
+
+      return get(this, 'subcolumnNodes').reduce((leaves, subcolumn) => {
+        leaves.push(...get(subcolumn, 'leaves'));
+
+        return leaves;
+      }, emberA());
+    },
+  }),
+
+  minWidth: computed('column.minWidth', {
+    get() {
+      if (get(this, 'isLeaf')) {
+        let columnMinWidth = get(this, 'column.minWidth');
+
+        return typeof columnMinWidth === 'number' ? columnMinWidth : DEFAULT_MIN_WIDTH;
+      }
+
+      return get(this, 'subcolumnNodes').reduce((sum, subcolumn) => {
+        let subcolumnMinWidth = get(subcolumn, 'minWidth');
+
+        return sum + subcolumnMinWidth;
+      }, 0);
+    },
+  }),
+
+  maxWidth: computed('column.minWidth', {
+    get() {
+      if (get(this, 'isLeaf')) {
+        let columnMaxWidth = get(this, 'column.maxWidth');
+
+        return typeof columnMaxWidth === 'number' ? columnMaxWidth : DEFAULT_MAX_WIDTH;
+      }
+
+      return get(this, 'subcolumnNodes').reduce((sum, subcolumn) => {
+        let subcolumnMaxWidth = get(subcolumn, 'maxWidth');
+
+        return sum + subcolumnMaxWidth;
+      }, 0);
+    },
+  }),
+
+  width: computed('isLeaf', 'subcolumnNodes.@each.width', 'column.width', {
+    get() {
+      if (get(this, 'isLeaf')) {
+        let column = get(this, 'column');
+        let columnWidth = get(column, 'width');
+
+        if (typeof columnWidth === 'number') {
+          return columnWidth;
+        } else {
+          let meta = get(this, 'tree.columnMetaCache').get(column);
+          return get(meta, '_width');
+        }
+      }
+
+      return get(this, 'subcolumnNodes').reduce((sum, subcolumn) => {
+        let subcolumnWidth = get(subcolumn, 'width');
+
+        return sum + subcolumnWidth;
+      }, 0);
+    },
+
+    set(k, newWidth) {
+      let oldWidth = get(this, 'width');
+      let isResizable = get(this, 'isResizable');
+
+      if (!isResizable) {
+        return oldWidth;
+      }
+
+      let delta = newWidth - oldWidth;
+
+      let minWidth = get(this, 'minWidth');
+      let maxWidth = get(this, 'maxWidth');
+
+      delta = Math.max(Math.min(oldWidth + delta, maxWidth), minWidth) - oldWidth;
+
+      if (delta === 0) {
+        return;
+      }
+
+      if (get(this, 'isLeaf')) {
+        let column = get(this, 'column');
+        let columnWidth = get(column, 'width');
+
+        if (typeof columnWidth === 'number') {
+          return set(column, 'width', oldWidth + delta);
+        } else {
+          let meta = get(this, 'tree.columnMetaCache').get(column);
+          return set(meta, '_width', oldWidth + delta);
+        }
+      } else {
+        let subcolumns = get(this, 'subcolumnNodes');
+
+        // Delta can only be rendered at a pixel level of precision in tables in
+        // some browsers, so we round and distribute the remainder as well. We also
+        // don't know when we may hit a constraint (e.g. minWidth) so we have to do
+        // this repeatedly. We take the largest chunk we can and try to fit it into
+        // each piece in a loop.
+
+        // We distribute chunks to the columns starting from the column with the
+        // smallest width to the column with the largest width.
+        let sortedSubcolumns = subcolumns
+          .sortBy('width')
+          .filter(n => get(n, 'isResizable'))
+          .reverse();
+
+        let loopCount = 0;
+        let prevDelta = 0;
+        delta = delta > 0 ? Math.floor(delta) : Math.ceil(delta);
+        while (delta !== 0) {
+          let deltaChunks = divideRounded(delta, sortedSubcolumns.length);
+          for (let i = 0; i < deltaChunks.length; i++) {
+            let subcolumn = sortedSubcolumns[i];
+            let deltaChunk = deltaChunks[i];
+            let oldWidth = get(subcolumn, 'width');
+            let targetWidth = oldWidth + deltaChunk;
+
+            set(subcolumn, 'width', targetWidth);
+
+            let newWidth = get(subcolumn, 'width');
+
+            // subtract the amount that changed, if any
+            delta -= newWidth - oldWidth;
+
+            if (delta === 0) {
+              break;
+            }
+          }
+          delta = delta > 0 ? Math.floor(delta) : Math.ceil(delta);
+
+          // If we weren't able to change the delta at all, then we hit a hard
+          // barrier. This can happen when a table has too many columns to size
+          // down, for instance.
+          if (prevDelta === delta) {
             break;
           }
-        }
-        delta = delta > 0 ? Math.floor(delta) : Math.ceil(delta);
 
-        // If we weren't able to change the delta at all, then we hit a hard
-        // barrier. This can happen when a table has too many columns to size
-        // down, for instance.
-        if (prevDelta === delta) {
+          prevDelta = delta;
+
+          loopCount++;
+          if (loopCount > LOOP_COUNT_GUARD) {
+            throw new Error('loop count exceeded guard while distributing width');
+          }
+        }
+
+        return get(this, 'width');
+      }
+    },
+  }),
+
+  offsetIndex: computed('parent.{offsetIndex,subcolumnNodes.[]}', {
+    get() {
+      let parent = get(this, 'parent');
+
+      if (!parent) {
+        return 0;
+      }
+
+      let subcolumns = get(parent, 'subcolumnNodes');
+      let offsetIndex = get(parent, 'offsetIndex');
+
+      for (let column of subcolumns) {
+        if (column === this) {
           break;
         }
 
-        prevDelta = delta;
+        offsetIndex += 1;
+      }
 
-        loopCount++;
-        if (loopCount > LOOP_COUNT_GUARD) {
-          throw new Error('loop count exceeded guard while distributing width');
+      return offsetIndex;
+    },
+  }),
+
+  offsetLeft: computed('parent.{offsetLeft,width}', {
+    get() {
+      let parent = get(this, 'parent');
+
+      if (!parent) {
+        return 0;
+      }
+
+      let subcolumns = get(parent, 'subcolumnNodes');
+      let offsetLeft = get(parent, 'offsetLeft');
+
+      for (let column of subcolumns) {
+        if (column === this) {
+          break;
         }
+
+        offsetLeft += get(column, 'width');
       }
 
-      return get(this, 'width');
-    }
-  }
+      return offsetLeft;
+    },
+  }),
 
-  @computed('parent.{offsetIndex,subcolumnNodes.[]}')
-  get offsetIndex() {
-    let parent = get(this, 'parent');
+  offsetRight: computed('parent.{offsetRight,width}', {
+    get() {
+      let parent = get(this, 'parent');
 
-    if (!parent) {
-      return 0;
-    }
-
-    let subcolumns = get(parent, 'subcolumnNodes');
-    let offsetIndex = get(parent, 'offsetIndex');
-
-    for (let column of subcolumns) {
-      if (column === this) {
-        break;
+      if (!parent) {
+        return 0;
       }
 
-      offsetIndex += 1;
-    }
+      let subcolumns = get(parent, 'subcolumnNodes')
+        .slice()
+        .reverse();
+      let offsetRight = get(parent, 'offsetRight');
 
-    return offsetIndex;
-  }
+      for (let column of subcolumns) {
+        if (column === this) {
+          break;
+        }
 
-  @computed('parent.{offsetLeft,width}')
-  get offsetLeft() {
-    let parent = get(this, 'parent');
-
-    if (!parent) {
-      return 0;
-    }
-
-    let subcolumns = get(parent, 'subcolumnNodes');
-    let offsetLeft = get(parent, 'offsetLeft');
-
-    for (let column of subcolumns) {
-      if (column === this) {
-        break;
+        offsetRight += get(column, 'width');
       }
 
-      offsetLeft += get(column, 'width');
-    }
-
-    return offsetLeft;
-  }
-
-  @computed('parent.{offsetRight,width}')
-  get offsetRight() {
-    let parent = get(this, 'parent');
-
-    if (!parent) {
-      return 0;
-    }
-
-    let subcolumns = get(parent, 'subcolumnNodes')
-      .slice()
-      .reverse();
-    let offsetRight = get(parent, 'offsetRight');
-
-    for (let column of subcolumns) {
-      if (column === this) {
-        break;
-      }
-
-      offsetRight += get(column, 'width');
-    }
-
-    return offsetRight;
-  }
+      return offsetRight;
+    },
+  }),
 
   registerElement(element) {
     this.element = element;
-  }
-}
+  },
+});
 
-export default class ColumnTree extends EmberObject {
-  constructor() {
-    super(...arguments);
+export default EmberObject.extend({
+  init() {
+    this._super(...arguments);
 
     this.token = new Token();
 
+    this.sortColumnsByFixed = this.sortColumnsByFixed.bind(this);
+    this.ensureWidthConstraint = this.ensureWidthConstraint.bind(this);
+
     addObserver(this, 'columns.@each.isFixed', this.sortColumnsByFixed);
     addObserver(this, 'widthConstraint', this.ensureWidthConstraint);
-  }
+  },
 
   destroy() {
     this.token.cancel();
@@ -546,74 +560,81 @@ export default class ColumnTree extends EmberObject {
     removeObserver(this, 'columns.@each.isFixed', this.sortColumnsByFixed);
     removeObserver(this, 'widthConstraint', this.ensureWidthConstraint);
 
-    super.destroy(...arguments);
-  }
+    this._super(...arguments);
+  },
 
-  @computed('columns')
-  get root() {
-    let columns = get(this, 'columns');
+  root: computed('columns', {
+    get() {
+      let columns = get(this, 'columns');
 
-    return ColumnTreeNode.create({ column: { subcolumns: columns }, tree: this });
-  }
+      return ColumnTreeNode.create({ column: { subcolumns: columns }, tree: this });
+    },
+  }),
 
-  @computed('root.{maxChildDepth,leaves.[]}')
-  get rows() {
-    let rows = emberA();
-    let root = get(this, 'root');
-    let maxDepth = get(root, 'maxChildDepth');
+  rows: computed('root.{maxChildDepth,leaves.[]}', {
+    get() {
+      let rows = emberA();
+      let root = get(this, 'root');
+      let maxDepth = get(root, 'maxChildDepth');
 
-    let previousLevel = [root];
+      let previousLevel = [root];
 
-    for (let i = 0; i < maxDepth; i++) {
-      let currentLevel = previousLevel.reduce((children, node) => {
-        if (!get(node, 'isLeaf')) {
-          children.push(...get(node, 'subcolumnNodes'));
-        }
+      for (let i = 0; i < maxDepth; i++) {
+        let currentLevel = previousLevel.reduce((children, node) => {
+          if (!get(node, 'isLeaf')) {
+            children.push(...get(node, 'subcolumnNodes'));
+          }
 
-        return children;
-      }, []);
+          return children;
+        }, []);
 
-      let columns = currentLevel.map(node => get(node, 'column'));
+        let columns = currentLevel.map(node => get(node, 'column'));
 
-      rows.pushObject(emberA(columns));
+        rows.pushObject(emberA(columns));
 
-      previousLevel = currentLevel;
-    }
+        previousLevel = currentLevel;
+      }
 
-    return rows;
-  }
+      return rows;
+    },
+  }),
 
-  @computed('root.leaves.[]')
-  get leaves() {
-    return emberA(get(this, 'root.leaves').map(n => n.column));
-  }
+  leaves: computed('root.leaves.[]', {
+    get() {
+      return emberA(get(this, 'root.leaves').map(n => n.column));
+    },
+  }),
 
-  @computed('root.subcolumnNodes.@each.isFixed')
-  get leftFixedNodes() {
-    return get(this, 'root.subcolumnNodes').filterBy('isFixed', 'left');
-  }
+  leftFixedNodes: computed('root.subcolumnNodes.@each.isFixed', {
+    get() {
+      return get(this, 'root.subcolumnNodes').filterBy('isFixed', 'left');
+    },
+  }),
 
-  @computed('root.subcolumnNodes.@each.isFixed')
-  get rightFixedNodes() {
-    return get(this, 'root.subcolumnNodes').filterBy('isFixed', 'right');
-  }
+  rightFixedNodes: computed('root.subcolumnNodes.@each.isFixed', {
+    get() {
+      return get(this, 'root.subcolumnNodes').filterBy('isFixed', 'right');
+    },
+  }),
 
-  @computed('root.subcolumnNodes.@each.isFixed')
-  get unfixedNodes() {
-    return get(this, 'root.subcolumnNodes').filter(s => !get(s, 'isFixed'));
-  }
+  unfixedNodes: computed('root.subcolumnNodes.@each.isFixed', {
+    get() {
+      return get(this, 'root.subcolumnNodes').filter(s => !get(s, 'isFixed'));
+    },
+  }),
 
-  @computed('leftFixedNodes.@each.width', 'rightFixedNodes.@each.width')
-  get scrollBounds() {
-    let { left: containerLeft, right: containerRight } = getInnerClientRect(this.container);
+  scrollBounds: computed('leftFixedNodes.@each.width', 'rightFixedNodes.@each.width', {
+    get() {
+      let { left: containerLeft, right: containerRight } = getInnerClientRect(this.container);
 
-    containerLeft += get(this, 'leftFixedNodes').reduce((sum, n) => sum + get(n, 'width'), 0);
-    containerRight -= get(this, 'rightFixedNodes').reduce((sum, n) => sum + get(n, 'width'), 0);
+      containerLeft += get(this, 'leftFixedNodes').reduce((sum, n) => sum + get(n, 'width'), 0);
+      containerRight -= get(this, 'rightFixedNodes').reduce((sum, n) => sum + get(n, 'width'), 0);
 
-    return { containerLeft, containerRight };
-  }
+      return { containerLeft, containerRight };
+    },
+  }),
 
-  sortColumnsByFixed = () => {
+  sortColumnsByFixed() {
     // disable observer
     if (this._isSorting) {
       return;
@@ -647,9 +668,9 @@ export default class ColumnTree extends EmberObject {
     }
 
     this._isSorting = false;
-  };
+  },
 
-  ensureWidthConstraint = () => {
+  ensureWidthConstraint() {
     if (!this.container) {
       return;
     }
@@ -680,7 +701,7 @@ export default class ColumnTree extends EmberObject {
         set(columns, 'lastObject.width', oldWidth + delta);
       }
     }
-  };
+  },
 
   getReorderBounds(node) {
     let parent = get(node, 'parent');
@@ -731,7 +752,7 @@ export default class ColumnTree extends EmberObject {
     rightBound = (right - containerLeft) * scale + scrollLeft;
 
     return { leftBound, rightBound };
-  }
+  },
 
   registerContainer(container) {
     this.container = container;
@@ -740,7 +761,7 @@ export default class ColumnTree extends EmberObject {
     get(this, 'root').registerElement(container);
 
     scheduler.schedule('sync', this.ensureWidthConstraint, this.token);
-  }
+  },
 
   getClosestColumn(column, left, isFixed) {
     // If the column is fixed, adjust finder method and offset by the scroll
@@ -764,7 +785,7 @@ export default class ColumnTree extends EmberObject {
     }
 
     return subcolumns[subcolumns.length - 1];
-  }
+  },
 
   getClosestColumnOffset(column, left, isFixed) {
     let closestColumn = this.getClosestColumn(column, left, isFixed);
@@ -781,7 +802,7 @@ export default class ColumnTree extends EmberObject {
     }
 
     return offsetLeft;
-  }
+  },
 
   insertAfterColumn(parent, after, insert) {
     if (insert === after) {
@@ -798,7 +819,7 @@ export default class ColumnTree extends EmberObject {
     move(subcolumns, insertIndex, afterIndex);
 
     notifyPropertyChange(parent, 'column.subcolumns.[]');
-  }
+  },
 
   startReorder(node, clientX) {
     this.clientX = clientX;
@@ -809,7 +830,7 @@ export default class ColumnTree extends EmberObject {
     this._reorderDropIndicator = new DropIndicator(this.container, node.element, bounds);
 
     this.container.classList.add('is-reordering');
-  }
+  },
 
   updateReorder(node, clientX) {
     this.clientX = clientX;
@@ -819,7 +840,7 @@ export default class ColumnTree extends EmberObject {
     if (!get(node, 'isFixed')) {
       this.updateScroll(node, true, true, this._updateReorder.bind(this));
     }
-  }
+  },
 
   _updateReorder(node) {
     let { scrollLeft } = this.container;
@@ -841,7 +862,7 @@ export default class ColumnTree extends EmberObject {
       this.getClosestColumn(node, this._reorderDropIndicator.left, get(node, 'isFixed')),
       'width'
     );
-  }
+  },
 
   endReorder(node) {
     let { scrollLeft } = this.container;
@@ -871,11 +892,11 @@ export default class ColumnTree extends EmberObject {
     this.container.classList.remove('is-reordering');
 
     this.sendAction('onReorder', get(node, 'column'), get(closestColumn, 'column'));
-  }
+  },
 
   startResize(node, clientX) {
     this.clientX = clientX;
-  }
+  },
 
   updateResize(node, clientX) {
     let delta = Math.floor(
@@ -894,7 +915,7 @@ export default class ColumnTree extends EmberObject {
     this.container.classList.add('is-resizing');
 
     this._updateResize(node, delta);
-  }
+  },
 
   _updateResize(node, delta) {
     let resizeMode = get(this, 'resizeMode');
@@ -935,7 +956,7 @@ export default class ColumnTree extends EmberObject {
     set(node, 'width', newWidth);
 
     this.ensureWidthConstraint();
-  }
+  },
 
   endResize(node) {
     if (this._nextUpdateScroll) {
@@ -946,7 +967,7 @@ export default class ColumnTree extends EmberObject {
     this.container.classList.remove('is-resizing');
 
     this.sendAction('onResize', get(node, 'column'));
-  }
+  },
 
   updateScroll(node, stopAtLeft, stopAtRight, callback) {
     if (this._nextUpdateScroll) {
@@ -993,5 +1014,5 @@ export default class ColumnTree extends EmberObject {
       },
       this.token
     );
-  }
-}
+  },
+});
