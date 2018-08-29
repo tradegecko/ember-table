@@ -2,7 +2,7 @@ import EmberObject, { get, set } from '@ember/object';
 import EmberArray, { A as emberA, isArray } from '@ember/array';
 import { assert } from '@ember/debug';
 
-import { computed } from '@ember-decorators/object';
+import { computed } from '@ember/object';
 import { addObserver } from '@ember/object/observers';
 
 import { objectAt } from './utils/array';
@@ -16,8 +16,13 @@ export const SELECT_MODE = {
   MULTIPLE: 'multiple',
 };
 
-export class TableRowMeta extends EmberObject {
-  _rowValue = null;
+export const TableRowMeta = EmberObject.extend({
+  _rowValue: null,
+
+  init() {
+    this._super(...arguments);
+    this._cellMetaCache = new Map();
+  },
 
   /**
     The map that contains cell meta information for this row. Is meant to be
@@ -25,104 +30,113 @@ export class TableRowMeta extends EmberObject {
     memory leaks, we need to be able to clean the cache manually when the row
     is destroyed or updated, which is why we use a Map instead of WeakMap
   */
-  _cellMetaCache = new Map();
-  _isCollapsed = false;
+  // _cellMetaCache = new Map();
+  _isCollapsed: false,
 
-  @computed('_rowValue.isCollapsed')
-  get isCollapsed() {
-    let rowValue = get(this, '_rowValue');
+  isCollapsed: computed('_rowValue.isCollapsed', {
+    get() {
+      let rowValue = get(this, '_rowValue');
 
-    if (rowValue.hasOwnProperty('isCollapsed')) {
-      return get(rowValue, 'isCollapsed');
-    } else {
-      return this._isCollapsed;
-    }
-  }
+      if (rowValue.hasOwnProperty('isCollapsed')) {
+        return get(rowValue, 'isCollapsed');
+      } else {
+        return this._isCollapsed;
+      }
+    },
 
-  set isCollapsed(isCollapsed) {
-    let rowValue = get(this, '_rowValue');
+    set(k, isCollapsed) {
+      let rowValue = get(this, '_rowValue');
 
-    if (rowValue.hasOwnProperty('isCollapsed')) {
-      set(rowValue, 'isCollapsed', isCollapsed);
-    } else {
-      this._isCollapsed = isCollapsed;
-    }
+      if (rowValue.hasOwnProperty('isCollapsed')) {
+        set(rowValue, 'isCollapsed', isCollapsed);
+      } else {
+        this._isCollapsed = isCollapsed;
+      }
 
-    return isCollapsed;
-  }
+      return isCollapsed;
+    },
+  }),
 
-  @computed('_tree.selection', '_parentMeta.isSelected')
-  get isSelected() {
-    let rowValue = get(this, '_rowValue');
-    let selection = get(this, '_tree.selection');
+  isSelected: computed('_tree.selection', '_parentMeta.isSelected', {
+    get() {
+      let rowValue = get(this, '_rowValue');
+      let selection = get(this, '_tree.selection');
 
-    if (isArray(selection)) {
-      return this.get('isGroupSelected');
-    }
+      if (isArray(selection)) {
+        return this.get('isGroupSelected');
+      }
 
-    return selection === rowValue || get(this, '_parentMeta.isSelected');
-  }
+      return selection === rowValue || get(this, '_parentMeta.isSelected');
+    },
+  }),
 
-  @computed('_tree.selection.[]', '_parentMeta.isSelected')
-  get isGroupSelected() {
-    let rowValue = get(this, '_rowValue');
-    let selection = get(this, '_tree.selection');
+  isGroupSelected: computed('_tree.selection.[]', '_parentMeta.isSelected', {
+    get() {
+      let rowValue = get(this, '_rowValue');
+      let selection = get(this, '_tree.selection');
 
-    if (!selection || !isArray(selection)) {
-      return false;
-    }
+      if (!selection || !isArray(selection)) {
+        return false;
+      }
 
-    return selection.includes(rowValue) || get(this, '_parentMeta.isGroupSelected');
-  }
+      return selection.includes(rowValue) || get(this, '_parentMeta.isGroupSelected');
+    },
+  }),
 
-  @computed('_tree.{enableTree,enableCollapse}', '_rowValue.children.[]')
-  get canCollapse() {
-    if (!get(this, '_tree.enableTree') || !get(this, '_tree.enableCollapse')) {
-      return false;
-    }
+  canCollapse: computed('_tree.{enableTree,enableCollapse}', '_rowValue.children.[]', {
+    get() {
+      if (!get(this, '_tree.enableTree') || !get(this, '_tree.enableCollapse')) {
+        return false;
+      }
 
-    let children = get(this, '_rowValue.children');
+      let children = get(this, '_rowValue.children');
 
-    return isArray(children) && get(children, 'length') > 0;
-  }
+      return isArray(children) && get(children, 'length') > 0;
+    },
+  }),
 
-  @computed('_parentMeta.depth')
-  get depth() {
-    let parentMeta = get(this, '_parentMeta');
+  depth: computed('_parentMeta.depth', {
+    get() {
+      let parentMeta = get(this, '_parentMeta');
 
-    return parentMeta ? get(parentMeta, 'depth') + 1 : 0;
-  }
+      return parentMeta ? get(parentMeta, 'depth') + 1 : 0;
+    },
+  }),
 
-  @computed('_tree.length')
-  get first() {
-    if (get(this, '_tree.length') === 0) {
-      return null;
-    }
-    return get(this, '_tree').objectAt(0);
-  }
+  first: computed('_tree.length', {
+    get() {
+      if (get(this, '_tree.length') === 0) {
+        return null;
+      }
+      return get(this, '_tree').objectAt(0);
+    },
+  }),
 
-  @computed('_tree.length')
-  get last() {
-    let tree = get(this, '_tree');
-    return tree.objectAt(get(tree, 'length') - 1);
-  }
+  last: computed('_tree.length', {
+    get() {
+      let tree = get(this, '_tree');
+      return tree.objectAt(get(tree, 'length') - 1);
+    },
+  }),
 
-  @computed('_tree.length')
-  get next() {
-    let tree = get(this, '_tree');
-    if (get(this, 'index') + 1 >= get(tree, 'length')) {
-      return null;
-    }
-    return tree.objectAt(get(this, 'index') + 1);
-  }
+  next: computed('_tree.length', {
+    get() {
+      let tree = get(this, '_tree');
+      if (get(this, 'index') + 1 >= get(tree, 'length')) {
+        return null;
+      }
+      return tree.objectAt(get(this, 'index') + 1);
+    },
+  }),
 
-  @computed('_tree.length')
-  get prev() {
-    if (get(this, 'index') === 0) {
-      return null;
-    }
-    return get(this, '_tree').objectAt(get(this, 'index') - 1);
-  }
+  prev: computed('_tree.length', {
+    get() {
+      if (get(this, 'index') === 0) {
+        return null;
+      }
+      return get(this, '_tree').objectAt(get(this, 'index') - 1);
+    },
+  }),
 
   toggleCollapse() {
     let canCollapse = get(this, 'canCollapse');
@@ -130,7 +144,7 @@ export class TableRowMeta extends EmberObject {
     if (canCollapse) {
       set(this, 'isCollapsed', !get(this, 'isCollapsed'));
     }
-  }
+  },
 
   select({ single, toggle, range } = {}) {
     if (get(this, 'isDestroying') || get(this, 'isDestroyed')) {
@@ -229,14 +243,14 @@ export class TableRowMeta extends EmberObject {
     tree.sendAction('onSelect', selection);
 
     tree._lastSelectedIndex = rowIndex;
-  }
+  },
 
   destroy() {
-    super.destroy();
+    this._super(...arguments);
 
     this._cellMetaCache.clear();
-  }
-}
+  },
+});
 
 function reduceSelectedRows(selection, groupingCounts, rowMetaCache) {
   let reducedGroupingCounts = new Map();
@@ -306,11 +320,11 @@ function closestLessThan(values, target) {
 /**
   Single node of a CollapseTree
 */
-class CollapseTreeNode extends EmberObject {
-  _childNodes = null;
+const CollapseTreeNode = EmberObject.extend({
+  _childNodes: null,
 
-  constructor() {
-    super(...arguments);
+  init() {
+    this._super(...arguments);
 
     let value = get(this, 'value');
     let parentValue = get(this, 'parent.value');
@@ -334,13 +348,13 @@ class CollapseTreeNode extends EmberObject {
         notifyPropertyChange(parent, 'length');
       });
     }
-  }
+  },
 
   destroy() {
     this.cleanChildNodes();
 
-    super.destroy(...arguments);
-  }
+    this._super(...arguments);
+  },
 
   /**
     Fully destroys the child nodes in the event that they change or that this
@@ -356,7 +370,7 @@ class CollapseTreeNode extends EmberObject {
       }
       this._childNodes = null;
     }
-  }
+  },
 
   /**
     Whether or not the node is leaf of the CollapseTree. A node is a leaf if
@@ -367,31 +381,33 @@ class CollapseTreeNode extends EmberObject {
 
     @type boolean
   */
-  @computed('value.children.@each.children', 'isRoot', 'tree.enableTree')
-  get isLeaf() {
-    if (get(this, 'isRoot') && !get(this, 'tree.enableTree')) {
-      return true;
-    }
+  isLeaf: computed('value.children.@each.children', 'isRoot', 'tree.enableTree', {
+    get() {
+      if (get(this, 'isRoot') && !get(this, 'tree.enableTree')) {
+        return true;
+      }
 
-    return !get(this, 'value.children').some(child => isArray(get(child, 'children')));
-  }
+      return !get(this, 'value.children').some(child => isArray(get(child, 'children')));
+    },
+  }),
 
-  @computed('value.children.[]', 'tree.{sorts.[],sortFunction,compareFunction}')
-  get sortedChildren() {
-    let valueChildren = get(this, 'value.children');
+  sortedChildren: computed('value.children.[]', 'tree.{sorts.[],sortFunction,compareFunction}', {
+    get() {
+      let valueChildren = get(this, 'value.children');
 
-    let sorts = get(this, 'tree.sorts');
-    let sortFunction = get(this, 'tree.sortFunction');
-    let compareFunction = get(this, 'tree.compareFunction');
+      let sorts = get(this, 'tree.sorts');
+      let sortFunction = get(this, 'tree.sortFunction');
+      let compareFunction = get(this, 'tree.compareFunction');
 
-    if (sortFunction && compareFunction && sorts && get(sorts, 'length') > 0) {
-      valueChildren = mergeSort(valueChildren, (itemA, itemB) => {
-        return sortFunction(itemA, itemB, sorts, compareFunction);
-      });
-    }
+      if (sortFunction && compareFunction && sorts && get(sorts, 'length') > 0) {
+        valueChildren = mergeSort(valueChildren, (itemA, itemB) => {
+          return sortFunction(itemA, itemB, sorts, compareFunction);
+        });
+      }
 
-    return valueChildren;
-  }
+      return valueChildren;
+    },
+  }),
 
   /**
     The children of this node, if they exist. Children can be other nodes, or
@@ -420,42 +436,43 @@ class CollapseTreeNode extends EmberObject {
 
     @type Array<Node|Array<object>>
   */
-  @computed('sortedChildren.[]', 'isLeaf')
-  get childNodes() {
-    this.cleanChildNodes();
+  childNodes: computed('sortedChildren.[]', 'isLeaf', {
+    get() {
+      this.cleanChildNodes();
 
-    if (get(this, 'isLeaf')) {
-      return null;
-    }
-
-    let sortedChildren = get(this, 'sortedChildren');
-    let tree = get(this, 'tree');
-    let children = [];
-    let sliceStart = false;
-
-    sortedChildren.forEach((child, index) => {
-      let grandchildren = get(child, 'children');
-
-      if (isArray(grandchildren)) {
-        if (sliceStart !== false) {
-          children.push(sortedChildren.slice(sliceStart, index));
-          sliceStart = false;
-        }
-
-        children.push(CollapseTreeNode.create({ value: child, parent: this, tree }));
-      } else if (sliceStart === false) {
-        sliceStart = index;
+      if (get(this, 'isLeaf')) {
+        return null;
       }
-    });
 
-    if (sliceStart !== false) {
-      children.push(sortedChildren.slice(sliceStart));
-    }
+      let sortedChildren = get(this, 'sortedChildren');
+      let tree = get(this, 'tree');
+      let children = [];
+      let sliceStart = false;
 
-    this._childNodes = children;
+      sortedChildren.forEach((child, index) => {
+        let grandchildren = get(child, 'children');
 
-    return children;
-  }
+        if (isArray(grandchildren)) {
+          if (sliceStart !== false) {
+            children.push(sortedChildren.slice(sliceStart, index));
+            sliceStart = false;
+          }
+
+          children.push(CollapseTreeNode.create({ value: child, parent: this, tree }));
+        } else if (sliceStart === false) {
+          sliceStart = index;
+        }
+      });
+
+      if (sliceStart !== false) {
+        children.push(sortedChildren.slice(sliceStart));
+      }
+
+      this._childNodes = children;
+
+      return children;
+    },
+  }),
 
   /**
     The length of the node. Branches in three directions:
@@ -468,22 +485,24 @@ class CollapseTreeNode extends EmberObject {
         length of its value-children.
     3. Otherwise, the length is the sum of the lengths of its children.
   */
-  @computed(
+  length: computed(
     'childNodes.[]',
     'sortedChildren.[]',
     'isLeaf',
     'rowMeta.isCollapsed',
-    'tree.enableTree'
-  )
-  get length() {
-    if (get(this, 'rowMeta.isCollapsed') === true) {
-      return 1;
-    } else if (get(this, 'isLeaf')) {
-      return 1 + get(this, 'sortedChildren.length');
-    } else {
-      return 1 + get(this, 'childNodes').reduce((sum, child) => sum + get(child, 'length'), 0);
+    'tree.enableTree',
+    {
+      get() {
+        if (get(this, 'rowMeta.isCollapsed') === true) {
+          return 1;
+        } else if (get(this, 'isLeaf')) {
+          return 1 + get(this, 'sortedChildren.length');
+        } else {
+          return 1 + get(this, 'childNodes').reduce((sum, child) => sum + get(child, 'length'), 0);
+        }
+      },
     }
-  }
+  ),
 
   /**
     Calculates a list of the summation of offsets of children to run a binary
@@ -517,22 +536,23 @@ class CollapseTreeNode extends EmberObject {
     index. I know I can then recurse down that node and I should eventually
     find the item I'm after.
   */
-  @computed('length', 'isLeaf')
-  get offsetList() {
-    if (get(this, 'isLeaf')) {
-      return null;
-    }
+  offsetList: computed('length', 'isLeaf', {
+    get() {
+      if (get(this, 'isLeaf')) {
+        return null;
+      }
 
-    let offset = 0;
-    let offsetList = [];
+      let offset = 0;
+      let offsetList = [];
 
-    for (let child of get(this, 'childNodes')) {
-      offsetList.push(offset);
-      offset += get(child, 'length');
-    }
+      for (let child of get(this, 'childNodes')) {
+        offsetList.push(offset);
+        offset += get(child, 'length');
+      }
 
-    return offsetList;
-  }
+      return offsetList;
+    },
+  }),
 
   /**
     Finds the object at the given index, where an index n is defined as the n-th
@@ -591,8 +611,8 @@ class CollapseTreeNode extends EmberObject {
     }
 
     return child.objectAt(normalizedIndex);
-  }
-}
+  },
+});
 
 /**
   The goal of the collapse tree is provide a data structure that:
@@ -649,40 +669,42 @@ class CollapseTreeNode extends EmberObject {
   no need - they are length 1 and have no children, so no custom. Our tree saves an
   order of magnitude of space and allocation costs this way.
 */
-export default class CollapseTree extends EmberObject.extend(EmberArray) {
-  constructor() {
-    super(...arguments);
+
+export default EmberObject.extend(EmberArray, {
+  init() {
+    this._super(...arguments);
 
     // Whenever the root node's length changes we need to propogate the change to
     // users of the tree, and since the tree is meant to work like an array we should
     // trigger a change on the `[]` key as well.
     addObserver(this, 'root.length', () => notifyPropertyChange(this, '[]'));
-  }
+  },
 
   destroy() {
     if (this._root) {
       this._root.destroy();
     }
 
-    super.destroy(...arguments);
-  }
+    this._super(...arguments);
+  },
 
   /*
     The root node of the tree. Either wraps a true root, or a fake one created
     if the root is an array.
   */
-  @computed('rows')
-  get root() {
-    if (this._root) {
-      this._root.destroy();
-    }
+  root: computed('rows', {
+    get() {
+      if (this._root) {
+        this._root.destroy();
+      }
 
-    let rows = get(this, 'rows');
+      let rows = get(this, 'rows');
 
-    this._root = CollapseTreeNode.create({ value: { children: rows }, tree: this });
+      this._root = CollapseTreeNode.create({ value: { children: rows }, tree: this });
 
-    return this._root;
-  }
+      return this._root;
+    },
+  }),
 
   /**
 
@@ -704,7 +726,7 @@ export default class CollapseTree extends EmberObject.extend(EmberArray) {
     set(meta, 'index', index);
 
     return result;
-  }
+  },
 
   forEach(fn) {
     let length = get(this, 'length');
@@ -712,16 +734,17 @@ export default class CollapseTree extends EmberObject.extend(EmberArray) {
     for (let i = 0; i < length; i++) {
       fn(this.objectAt(i), i);
     }
-  }
+  },
 
   /**
     Normalized length of the tree
 
     @type {number}
   */
-  @computed('root.length')
-  get length() {
-    // Remove the root level node from the length count
-    return get(this, 'root.length') - 1;
-  }
-}
+  length: computed('root.length', {
+    get() {
+      // Remove the root level node from the length count
+      return get(this, 'root.length') - 1;
+    },
+  }),
+});
