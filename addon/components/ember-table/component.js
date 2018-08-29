@@ -2,8 +2,8 @@ import Component from '@ember/component';
 import { htmlSafe } from '@ember/string';
 
 import { computed } from '@ember-decorators/object';
-import { attribute, classNames } from '@ember-decorators/component';
-import { service } from '@ember-decorators/service';
+// import { attribute, classNames } from '@ember-decorators/component';
+import { inject } from '@ember/service';
 
 import {
   setupLegacyStickyPolyfill,
@@ -35,18 +35,22 @@ import layout from './template';
   @yield {Component} t.body - The table body component
   @yield {Component} t.foot - The table footer component
 */
-@classNames('ember-table')
-export default class EmberTable extends Component {
-  layout = layout;
+export default Component.extend({
+  layout,
+  classNames: ['ember-table'],
+  attributeBindings: ['data-test-ember-table'],
 
-  @service
-  userAgent;
+  userAgent: inject(),
 
-  @attribute('data-test-ember-table')
-  dataTestEmberTable = true;
+  dataTestEmberTable: true,
+
+  init() {
+    this._super(...arguments);
+    this.registerColumnTree = this.registerColumnTree.bind(this);
+  },
 
   didInsertElement() {
-    super.didInsertElement(...arguments);
+    this._super(...arguments);
 
     let browser = this.get('userAgent.browser');
 
@@ -63,7 +67,7 @@ export default class EmberTable extends Component {
         setupTableStickyPolyfill(tfoot);
       }
     }
-  }
+  },
 
   willDestroyElement() {
     let browser = this.get('userAgent.browser');
@@ -83,23 +87,25 @@ export default class EmberTable extends Component {
       }
     }
 
-    super.willDestroyElement(...arguments);
-  }
+    this._super(...arguments);
+  },
 
-  @computed('tableWidth')
-  get tableStyle() {
-    return htmlSafe(`width: ${this.get('tableWidth')}px;`);
-  }
+  tableStyle: computed('tableWidth', {
+    get() {
+      return htmlSafe(`width: ${this.get('tableWidth')}px;`);
+    },
+  }),
 
-  @computed
-  get api() {
-    return {
-      columns: null,
-      registerColumnTree: this.registerColumnTree,
-    };
-  }
+  api: computed({
+    get() {
+      return {
+        columns: null,
+        registerColumnTree: this.registerColumnTree,
+      };
+    },
+  }),
 
-  registerColumnTree = columnTree => {
+  registerColumnTree(columnTree) {
     this.set('api.columnTree', columnTree);
-  };
-}
+  },
+});
