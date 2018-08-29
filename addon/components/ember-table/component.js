@@ -1,7 +1,7 @@
 import Component from '@ember/component';
 import { htmlSafe } from '@ember/string';
 
-import { computed } from '@ember-decorators/object';
+import { computed } from '@ember/object';
 // import { attribute, classNames } from '@ember-decorators/component';
 import { inject } from '@ember/service';
 

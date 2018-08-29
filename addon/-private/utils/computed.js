@@ -1,6 +1,7 @@
 import EmberObject, { defineProperty, computed, observer } from '@ember/object';
+import { computed } from '@ember/object';
 import { alias } from '@ember/object/computed';
-import { macro } from '@ember-decorators/object/computed';
+// import { macro } from '@ember-decorators/object/computed';
 
 const PROPERTIES = new WeakMap();
 
@@ -110,15 +111,15 @@ function classComputedProperty(isDynamicList, computedFunction) {
   };
 }
 
-export const dynamicAlias = macro(
-  classComputedProperty([false, true], function(...segments) {
-    if (segments.every(s => typeof s === 'string')) {
-      return alias(segments.join('.'));
-    } else {
-      return null;
-    }
-  })
-);
+// export const dynamicAlias = macro(
+//   classComputedProperty([false, true], function(...segments) {
+//     if (segments.every(s => typeof s === 'string')) {
+//       return alias(segments.join('.'));
+//     } else {
+//       return null;
+//     }
+//   })
+// );
 
 export const dynamicAliasNew = classComputedProperty([false, true], function(...segments) {
   if (segments.every(s => typeof s === 'string')) {
@@ -127,3 +128,16 @@ export const dynamicAliasNew = classComputedProperty([false, true], function(...
     return null;
   }
 });
+
+
+
+export const computedFallbackIfUndefined = (fallback) {
+  return computed({
+    get() {
+      return fallback;
+    },
+    set(_, v) {
+      return v === undefined ? fallback : v;
+    }
+  });
+}
