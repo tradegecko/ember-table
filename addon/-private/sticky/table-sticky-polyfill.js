@@ -9,6 +9,12 @@ class TableStickyPolyfill {
     this.element.style.position = 'static';
     this.side = element.tagName === 'THEAD' ? 'top' : 'bottom';
 
+    this.setupRowMutationObservers = this.setupRowMutationObservers.bind(this);
+    this.teardownRowMutationObservers = this.teardownRowMutationObservers.bind(this);
+    this.setupResizeSensors = this.setupResizeSensors.bind(this);
+    this.teardownResizeSensors = this.teardownResizeSensors.bind(this);
+    this.repositionStickyElements = this.repositionStickyElements.bind(this);
+
     this.setupRaf = requestAnimationFrame(this.repositionStickyElements);
 
     this.setupResizeSensors();
@@ -38,7 +44,7 @@ class TableStickyPolyfill {
     this.mutationObserver.disconnect();
   }
 
-  setupRowMutationObservers = () => {
+  setupRowMutationObservers() {
     let rows = Array.from(this.element.children);
 
     this.rowMutationObservers = rows.map(row => {
@@ -48,13 +54,13 @@ class TableStickyPolyfill {
 
       return observer;
     });
-  };
+  }
 
-  teardownRowMutationObservers = () => {
+  teardownRowMutationObservers() {
     this.rowMutationObservers.forEach(observer => observer.disconnect());
-  };
+  }
 
-  setupResizeSensors = () => {
+  setupResizeSensors() {
     let rows = Array.from(this.element.children);
     let firstCells = rows.map(r => r.firstElementChild);
 
@@ -63,13 +69,13 @@ class TableStickyPolyfill {
 
       return [cell, sensor];
     });
-  };
+  }
 
-  teardownResizeSensors = () => {
+  teardownResizeSensors() {
     this.resizeSensors.forEach(([cell, sensor]) => sensor.detach(cell));
-  };
+  }
 
-  repositionStickyElements = () => {
+  repositionStickyElements() {
     let table = this.element.parentNode;
     let scale = table.offsetHeight / table.getBoundingClientRect().height;
 
@@ -92,7 +98,7 @@ class TableStickyPolyfill {
 
       offset += height;
     }
-  };
+  }
 }
 
 export function setupTableStickyPolyfill(element) {
