@@ -4,26 +4,18 @@
       {{yield (hash
         columnValue=api.columnValue
         columnMeta=api.columnMeta
-
         sorts=api.sorts
         sendUpdateSort=api.sendUpdateSort
-
-        cell=(component "ember-th" api=api)
       )}}
     {{else}}
       {{yield (hash
         api=api
-
         cellValue=api.cellValue
         cellMeta=api.cellMeta
-
         columnValue=api.columnValue
         columnMeta=api.columnMeta
-
         rowValue=api.rowValue
         rowMeta=api.rowMeta
-
-        cell=(component "ember-td" api=api)
       )}}
     {{/if}}
   {{else if isHeader}}

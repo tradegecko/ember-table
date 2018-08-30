@@ -3,8 +3,6 @@
     {{yield (hash
       cells=api.cells
       isHeader=api.isHeader
-
-      row=(component "ember-tr" api=api)
     )}}
   {{else}}
     {{ember-tr api=api}}
