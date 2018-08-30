@@ -1,4 +1,6 @@
 import Component from '@ember/component';
+import { computedFallbackIfUndefined } from '../../-private/utils/computed';
+
 // import { tagName, attribute } from '@ember-decorators/component';
 // import { argument } from '@ember-decorators/argument';
 // import { type, optional } from '@ember-decorators/argument/type';
@@ -9,9 +11,9 @@ export default Component.extend({
   attributeBindings: ['type', 'checked', 'disabled', 'indeterminate', 'value', 'aria-label'],
   type: 'checkbox',
   value: null,
-  checked: false,
-  disabled: false,
-  indeterminate: false,
+  checked: computedFallbackIfUndefined(false),
+  disabled: computedFallbackIfUndefined(false),
+  indeterminate: computedFallbackIfUndefined(false),
 
   // @argument
   // @type(optional(Action))

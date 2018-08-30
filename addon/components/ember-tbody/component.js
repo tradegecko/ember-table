@@ -61,7 +61,7 @@ export default Component.extend({
     deselects other rows), and 'multiple' (multiple rows can be selected through
     ctrl/cmd-click or shift-click).
   */
-  checkboxSelectionMode: SELECT_MODE.MULTIPLE,
+  checkboxSelectionMode: computedFallbackIfUndefined(SELECT_MODE.MULTIPLE),
 
   /**
     Sets which checkbox selection behavior to follow. Possible values are 'none'
@@ -69,18 +69,18 @@ export default Component.extend({
     deselects other rows), and 'multiple' (multiple rows can be selected through
     ctrl/cmd-click or shift-click).
   */
-  rowSelectionMode: SELECT_MODE.MULTIPLE,
+  rowSelectionMode: computedFallbackIfUndefined(SELECT_MODE.MULTIPLE),
 
   /**
     When true, this option causes selecting all of a node's children to also
     select the node itself.
   */
-  selectingChildrenSelectsParent: true,
+  selectingChildrenSelectsParent: computedFallbackIfUndefined(true),
 
   /**
     The currently selected rows. Can either be an array or and individual row.
   */
-  selection: null,
+  selection: computedFallbackIfUndefined(null),
 
   /**
     An action that triggers when the row selection of the table changes.
@@ -95,7 +95,7 @@ export default Component.extend({
     Estimated height for each row. This number is used to decide how many rows
     will be rendered at initial rendering.
   */
-  estimateRowHeight: 30,
+  estimateRowHeight: computedFallbackIfUndefined(30),
 
   /**
     A flag that controls if all rows have same static height or not. By default
@@ -103,17 +103,17 @@ export default Component.extend({
     it is set to true, all rows have the same height equivalent to
     estimateRowHeight.
   */
-  staticHeight: false,
+  staticHeight: computedFallbackIfUndefined(false),
 
   /**
     The number of extra rows to render on either side of the table's viewport
   */
-  bufferSize: 20,
+  bufferSize: computedFallbackIfUndefined(20),
 
   /**
     A flag that tells the table to render all of its rows at once.
   */
-  renderAll: false,
+  renderAll: computedFallbackIfUndefined(false),
 
   /**
     An action that is triggered when the table reaches the first row.
@@ -146,12 +146,12 @@ export default Component.extend({
   /**
     Boolean flag that enables tree behavior if items have a `children` property
   */
-  enableTree: true,
+  enableTree: computedFallbackIfUndefined(true),
 
   /**
     Boolean flag that enables collapsing tree nodes
   */
-  enableCollapse: true,
+  enableCollapse: computedFallbackIfUndefined(true),
 
   /**
     The row items that the table should display
@@ -167,7 +167,7 @@ export default Component.extend({
     position with `idForFirstItem`. This is passed through to the
     vertical-collection.
   */
-  key: '@identity',
+  key: computedFallbackIfUndefined('@identity'),
 
   /**
     The map that contains row meta information for this table.

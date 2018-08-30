@@ -1,5 +1,6 @@
 import EmberObject, { computed, observer } from '@ember/object';
 import { alias } from '@ember/object/computed';
+import { copy } from '@ember/object/internals';
 import { defineProperty } from '@ember/polyfills';
 
 // import { macro } from '@ember-decorators/object/computed';
@@ -131,6 +132,7 @@ export const dynamicAliasNew = classComputedProperty([false, true], function(...
 });
 
 export const computedFallbackIfUndefined = fallback => {
+  fallback = copy(fallback);
   return computed({
     get() {
       return fallback;
