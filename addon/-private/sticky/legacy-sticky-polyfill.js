@@ -13,6 +13,7 @@ class LegacyStickyPolyfill {
     this.table = element.querySelector('table');
     this.header = element.querySelector('thead');
     this.footer = element.querySelector('tfoot');
+    this.positionStickyElements = this.positionStickyElements.bind(this);
 
     element.addEventListener('scroll', this.positionStickyElements);
 
@@ -57,7 +58,7 @@ class LegacyStickyPolyfill {
     }
   }
 
-  positionStickyElements = () => {
+  positionStickyElements() {
     let thead = this.header;
     let tfoot = this.footer;
 
@@ -81,7 +82,7 @@ class LegacyStickyPolyfill {
     for (let cell of leftColumn) {
       cell.style.transform = `translateX(${scrollLeft}px)`;
     }
-  };
+  }
 }
 
 export function setupLegacyStickyPolyfill(element) {
