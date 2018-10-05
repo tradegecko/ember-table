@@ -387,7 +387,7 @@ const CollapseTreeNode = EmberObject.extend({
         return true;
       }
 
-      return !get(this, 'value.children').some(child => isArray(get(child, 'children')));
+      return !get(this, 'value.children').any(child => isArray(get(child, 'children')));
     },
   }),
 

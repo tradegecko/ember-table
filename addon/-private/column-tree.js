@@ -273,7 +273,7 @@ const ColumnTreeNode = EmberObject.extend({
       } else {
         let subcolumns = get(this, 'subcolumnNodes');
 
-        return subcolumns.some(s => get(s, 'isResizable'));
+        return subcolumns.any(s => get(s, 'isResizable'));
       }
     },
   }),

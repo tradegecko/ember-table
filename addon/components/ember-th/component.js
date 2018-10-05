@@ -222,7 +222,7 @@ export default BaseTableCell.extend({
     }
   },
 
-  panEndHandler: () => {
+  panEndHandler() {
     if (this._columnState === COLUMN_RESIZING) {
       this.get('columnMeta').endResize();
     } else if (this._columnState === COLUMN_REORDERING) {
