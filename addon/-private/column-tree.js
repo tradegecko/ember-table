@@ -391,7 +391,7 @@ const ColumnTreeNode = EmberObject.extend({
       delta = Math.max(Math.min(oldWidth + delta, maxWidth), minWidth) - oldWidth;
 
       if (delta === 0) {
-        return;
+        return oldWidth;
       }
 
       if (get(this, 'isLeaf')) {
