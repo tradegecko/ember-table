@@ -137,7 +137,7 @@ const TableColumnMeta = EmberObject.extend({
 
   isSorted: gt('sortIndex', 0),
 
-  isMultiSorted: ('_node.tree.sorts.length', 1),
+  isMultiSorted: gt('_node.tree.sorts.length', 1),
 
   isSortedAsc: computed('_node.tree.sorts.[]', 'sortIndex', {
     get() {
