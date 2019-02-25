@@ -91,6 +91,8 @@ export default Component.extend({
   // @type(optional(Action))
   // onSelect = null;
 
+  containerSelector: computedFallbackIfUndefined('.ember-table'),
+
   /**
     Estimated height for each row. This number is used to decide how many rows
     will be rendered at initial rendering.
