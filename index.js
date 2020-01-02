@@ -3,7 +3,7 @@ const VersionChecker = require('ember-cli-version-checker');
 const replace = require('broccoli-string-replace');
 
 module.exports = {
-  name: 'ember-table',
+  name: 'ember-table-sprockets',
 
   included() {
     this._super.included.apply(this, arguments);
